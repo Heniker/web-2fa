@@ -7,7 +7,7 @@
     <!-- #[`group.header`]="{group, groupBy, items, headers, isOpen, toggle, remove}" -->
     <template #[`group.header`]="data">
       <td v-for="(item, i) in groups" :key="i" :colspan="item">
-        <slot :name="`group-${i}`" v-bind="data"> <span> </span> </slot>
+        <slot :name="`group-${i}`" v-bind="data"><span></span></slot>
       </td>
       <td class="group-toggle-button">
         <span class="align-center">
@@ -22,7 +22,25 @@
   </v-data-table>
 </template>
 
-<script lang="ts" src="./BetterTable.v.ts"></script>
+<script lang="ts">
+import { defineComponent } from '@vue/composition-api'
+import { VDataTable } from 'vuetify/lib'
+
+interface PropsI {
+  group: number[]
+}
+
+export default defineComponent({
+  props: ['group'],
+  extends: VDataTable,
+
+  setup(props: PropsI) {
+    return {
+      groups: props.group,
+    }
+  },
+})
+</script>
 
 <style scoped>
 * >>> .group-toggle-button {

@@ -1,13 +1,27 @@
-type AssertT = typeof import('assert')
-
-type ProcessT = {
-  env: { DEBUG: boolean; NODE_ENV: 'development' | 'production' }
+interface RequireI extends __WebpackModuleApi.RequireFunction {
+  resolve(id: string): string
 }
 
-interface Global {
-  assert: AssertT
-  process: ProcessT
+type AssertT = (condition: any, msg?: string) => asserts condition
+
+declare const assert: AssertT
+declare const require: RequireI
+
+// https://stackoverflow.com/questions/48011353/how-to-unwrap-type-of-a-promise?rq=1
+declare type Await<T> = T extends PromiseLike<infer U> ? U : T
+
+declare module '*.png' {
+  const value: string
+  export = value
 }
 
-// declare const assert: assertT
-// declare const process: processT
+declare module '*.svg' {
+  const value: string
+  export = value
+}
+
+declare module '*.vue' {
+  import Vue from 'vue'
+
+  export default Vue
+}
