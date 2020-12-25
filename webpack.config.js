@@ -51,7 +51,7 @@ const getEntryPath = (env, argv) => {
 const getOutputPath = (env, argv) =>
   argv.output ? path.resolve(__dirname, argv.output) : defaults.outputPath
 
-module.exports = async (env = {}, argv = {}) => {
+module.exports = async (env = process.env, argv = {}) => {
   const mode = getMode(env, argv)
   const target = getTarget(env, argv)
   const outputPath = getOutputPath(env, argv)
@@ -62,15 +62,13 @@ module.exports = async (env = {}, argv = {}) => {
   const isServer = !!process.env.WEBPACK_DEV_SERVER
 
   console.log(
-    `\n\nwebpack mode: ${mode}\ncompiling: ${entryPath}${
-      isServer ? `\nport:${port}` : ''
-    }\n\n`
+    `\n\nwebpack mode: ${mode}\ncompiling: ${entryPath}${isServer ? `\nport:${port}` : ''}\n\n`
   )
 
   return {
     mode,
     target,
-    devtool: isDev ? 'inline-source-map' : false,
+    devtool: isDev ? 'source-map' : false,
     entry: entryPath,
     resolve: {
       extensions: ['.js', '.vue', '.ts'],
@@ -83,7 +81,6 @@ module.exports = async (env = {}, argv = {}) => {
       minimize: !isDev,
       minimizer: [
         new TerserPlugin({
-          cache: true,
           parallel: true,
           // sourceMap: true,
 
@@ -93,12 +90,7 @@ module.exports = async (env = {}, argv = {}) => {
             },
             // https://github.com/webpack-contrib/terser-webpack-plugin#terseroptions
             compress: {
-              pure_funcs: [
-                'console.info',
-                'console.debug',
-                'console.warn',
-                'console.log',
-              ],
+              pure_funcs: ['console.info', 'console.debug', 'console.warn', 'console.log'],
             },
 
             output: {
@@ -124,6 +116,7 @@ module.exports = async (env = {}, argv = {}) => {
       moduleIds: 'hashed',
       runtimeChunk: 'single',
       splitChunks: {
+        // chunks: 'initial',
         chunks: 'all',
         cacheGroups: {
           // carefull with using this as it might actually increase bundle size
@@ -135,11 +128,6 @@ module.exports = async (env = {}, argv = {}) => {
             chunks: 'all',
           },
         },
-        // maxSize: 51200,
-        // actually is seems to increase load time
-        // https://developers.google.com/web/tools/chrome-devtools/network/issues
-        // maxInitialRequests: Infinity,
-        // chunks: 'all',
       },
     },
     module: {
@@ -157,6 +145,11 @@ module.exports = async (env = {}, argv = {}) => {
         {
           test: /\.vue$/,
           loader: 'vue-loader',
+        },
+        {
+          resourceQuery: /blockType=i18n/,
+          type: 'javascript/auto',
+          loader: '@kazupon/vue-i18n-loader',
         },
         {
           test: /\.tsx?$/,
@@ -185,7 +178,7 @@ module.exports = async (env = {}, argv = {}) => {
               loader: 'file-loader',
               options: {
                 name: '[name].[ext]',
-                outputPath: 'static/',
+                outputPath: 'assets',
                 // publicPath: path.relative(outputPath, '/static'),
               },
             },
@@ -197,18 +190,14 @@ module.exports = async (env = {}, argv = {}) => {
             isDev ? 'vue-style-loader' : MiniCssExtractPlugin.loader,
             {
               loader: 'css-loader',
-              // options: {
-              //   sourceMap: true,
-              // },
+              options: {
+                sourceMap: isDev,
+              },
             },
             {
               loader: 'sass-loader',
               options: {
                 implementation: require('sass'),
-                // sassOptions: {
-                //   fiber: require('fibers'),
-                //   indentedSyntax: true, // optional
-                // },
               },
             },
           ],
@@ -220,11 +209,7 @@ module.exports = async (env = {}, argv = {}) => {
             {
               loader: 'css-loader',
               options: {
-                sourceMap: true,
-                // modules: {
-                //   localIdentName: '[hash:base64:8]',
-                // getLocalIdent: oneLetterCss.getLocalIdent,
-                // },
+                sourceMap: isDev,
               },
             },
             'less-loader',
@@ -237,11 +222,7 @@ module.exports = async (env = {}, argv = {}) => {
             {
               loader: 'css-loader',
               options: {
-                sourceMap: true,
-                // modules: {
-                //   localIdentName: '[hash:base64:8]',
-                // getLocalIdent: oneLetterCss.getLocalIdent,
-                // },
+                sourceMap: isDev,
               },
             },
             'stylus-loader',
@@ -249,17 +230,32 @@ module.exports = async (env = {}, argv = {}) => {
         },
         {
           test: /\.css$/,
-          use: [
-            isDev ? 'vue-style-loader' : MiniCssExtractPlugin.loader,
+          oneOf: [
             {
-              loader: 'css-loader',
-              // options: {
-              //   sourceMap: true,
-              //   modules: {
-              //     localIdentName: '[hash:base64:8]',
-              //     // getLocalIdent: oneLetterCss.getLocalIdent,
-              //   },
-              // },
+              resourceQuery: /module/,
+              use: [
+                isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
+                {
+                  loader: 'css-loader',
+                  options: {
+                    sourceMap: isDev,
+                    modules: {
+                      localIdentName: isDev ? '[local]_[hash:base64:5]' : '[hash:base64]',
+                    },
+                  },
+                },
+              ],
+            },
+            {
+              use: [
+                isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
+                {
+                  loader: 'css-loader',
+                  options: {
+                    sourceMap: isDev,
+                  },
+                },
+              ],
             },
           ],
         },

@@ -1,25 +1,20 @@
 {
   "compilerOptions": {
+    "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "noImplicitAny": false,
     "sourceMap": true,
-    "target": "ES2018",
-    "module": "ES6",
-    "lib": ["DOM", "ESNext"],
+    "target": "ES2019",
+    "module": "ESNext",
+    "lib": ["DOM", "ESNext", "ES6", "DOM.Iterable"],
+    "downlevelIteration": true,
     "moduleResolution": "node",
     "experimentalDecorators": true,
-    "typeRoots": [
-      "./node_modules/@types",
-      "./node_modules/vuetify/types",
-      "shims"
-    ],
-    "types": ["vuetify"],
-    "importHelpers": true
+    "importHelpers": true,
+    "typeRoots": ["./node_modules/@types", "./node_modules/vuetify/types", "shims"],
+    "baseUrl": "."
   },
-  "exclude": ["node_modules"],
   "include": ["src", "shims"],
-  "typeAcquisition": {
-    "enable": true
-  }
+  "typeAcquisition": { "enable": true }
 }
