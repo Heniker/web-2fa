@@ -11,9 +11,7 @@
         </v-toolbar>
         <v-tabs vertical hide-slider class="border-bottom">
           <v-tab class="v-tab--disabled tab-width my-auto">
-            <v-icon left>
-              mdi-account
-            </v-icon>
+            <v-icon left>mdi-account</v-icon>
             Address
           </v-tab>
 
@@ -22,9 +20,7 @@
               <v-card-text class="white--text">
                 <v-text-field class="mt-4" dense label="Address">
                   <template #append-outer>
-                    <v-btn color="primary" text depressed small>
-                      Submit
-                    </v-btn>
+                    <v-btn color="primary" text depressed small>Submit</v-btn>
                   </template>
                 </v-text-field>
               </v-card-text>
@@ -33,9 +29,7 @@
         </v-tabs>
         <v-tabs vertical hide-slider>
           <v-tab class="v-tab--disabled tab-width mt-5">
-            <v-icon left>
-              mdi-account
-            </v-icon>
+            <v-icon left>mdi-account</v-icon>
             Diet
           </v-tab>
 
@@ -50,7 +44,7 @@
                 hide-default-footer
                 disable-pagination
               >
-                <template #group-0="{items}">
+                <template #group-0="{ items }">
                   <span class="d-flex align-center">
                     <v-img
                       class="mr-5"
@@ -82,7 +76,80 @@
   </v-app>
 </template>
 
-<script lang="ts" src="./App.v.ts" />
+<script lang="ts">
+import * as v from '@vue/composition-api'
+import BetterTable from './components/common/BetterTable.vue'
+
+export default v.defineComponent({
+  components: { BetterTable },
+  setup() {
+    return {
+      headers: [
+        { text: 'Category', value: '' },
+        {
+          text: 'Dessert (100g serving)',
+          align: 'start',
+          value: 'name',
+          groupable: false,
+        },
+        { text: 'Dairy', value: 'dairy' },
+      ],
+      desserts: [
+        {
+          name: 'Frozen Yogurt',
+          category: 'Ice cream',
+          dairy: 'Yes',
+        },
+        {
+          name: 'Ice cream sandwich',
+          category: 'Ice cream',
+          dairy: 'Yes',
+        },
+        {
+          name: 'Eclair',
+          category: 'Cookie',
+          dairy: 'Yes',
+        },
+        {
+          name: 'Cupcake',
+          category: 'Pastry',
+          dairy: 'Yes',
+        },
+        {
+          name: 'Gingerbread',
+          category: 'Cookie',
+          dairy: 'No',
+        },
+        {
+          name: 'Jelly bean',
+          category: 'Candy',
+          dairy: 'No',
+        },
+        {
+          name: 'Lollipop',
+          category: 'Candy',
+          dairy: 'No',
+        },
+        {
+          name: 'Honeycomb',
+          category: 'Toffee',
+          dairy: 'No',
+        },
+        {
+          name: 'Donut',
+          category: 'Pastry',
+          dairy: 'Yes',
+        },
+        {
+          name: 'KitKat',
+          category: 'Candy',
+          dairy: 'Yes',
+        },
+      ],
+    }
+  },
+})
+</script>
 
 <style>
 * {
