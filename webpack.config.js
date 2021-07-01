@@ -8,9 +8,12 @@ const TerserPlugin = require('terser-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
-const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const { getPortPromise } = require('portfinder')
+
+// known issues
+// https://github.com/vuetifyjs/vuetify/issues/13694
 
 const defaults = {
   mode: 'development',
@@ -43,7 +46,8 @@ const getMode = (env, argv) => {
 const getTarget = (env, argv) => argv.target || defaults.target
 
 const getEntryPath = (env, argv) => {
-  const entry = argv.entry || (argv._ && argv._[0]) || defaults.entry
+  // const entry = argv.entry[0] || (argv._ && argv._[0]) || defaults.entry // old webpack version, needs update
+  const entry = defaults.entry
   assert(entry, 'Please provide webpack entry')
   return path.resolve(__dirname, entry)
 }
@@ -106,14 +110,19 @@ module.exports = async (env = process.env, argv = {}) => {
             // ecma: 5 // default value
           },
         }),
-        new OptimizeCssAssetsPlugin({
-          cssProcessorPluginOptions: {
-            preset: ['default', { discardComments: { removeAll: true } }],
+        new CssMinimizerPlugin({
+          minimizerOptions: {
+            preset: [
+              'default',
+              {
+                discardComments: { removeAll: true },
+              },
+            ],
           },
         }),
       ],
 
-      moduleIds: 'hashed',
+      moduleIds: 'deterministic',
       runtimeChunk: 'single',
       splitChunks: {
         // chunks: 'initial',
@@ -234,7 +243,7 @@ module.exports = async (env = process.env, argv = {}) => {
             {
               resourceQuery: /module/,
               use: [
-                isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
+                isDev ? 'vue-style-loader' : MiniCssExtractPlugin.loader,
                 {
                   loader: 'css-loader',
                   options: {
@@ -297,7 +306,6 @@ module.exports = async (env = process.env, argv = {}) => {
         // Options similar to the same options in webpackOptions.output
         // all options are optional
         // filename: 'style/[name].[/*  */contenthash].css',
-        esModule: true,
         filename: 'style/[name].[hash].css',
         chunkFilename: 'style/[id].[hash].css',
         ignoreOrder: false, // Enable to remove warnings about conflicting order
