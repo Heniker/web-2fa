@@ -1,18 +1,21 @@
 {
   "scripts": {
-    "build": "webpack ./src/main.ts --mode=production",
-    "build-dev": "webpack ./src/main.ts",
-    "serve": "webpack serve ./src/main.ts",
+    "build": "webpack ./src/main.ts",
+    "build-dev": "webpack ./src/main.ts --mode=development",
+    "serve": "webpack serve ./src/main.ts --mode=development",
     "dev": "npm run serve",
     "lint": "eslint --ext .ts,.vue,.js -c .eslintrc.js ./src/ --fix"
   },
   "dependencies": {
+    "@kazupon/vue-i18n-loader": "^0.5.0",
     "@vue/composition-api": "^1.0.0-rc.12",
     "assert": "^2.0.0",
     "vue": "^2.6.14",
+    "vue-i18n": "^8.24.5",
     "vuetify": "^2.5.6"
   },
   "devDependencies": {
+    "@intlify/vue-i18n-loader": "^2.1.1",
     "@typescript-eslint/eslint-plugin": "^4.28.1",
     "@typescript-eslint/parser": "^4.28.1",
     "@vue/compiler-sfc": "^3.1.2",

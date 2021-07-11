@@ -1,4 +1,4 @@
 # Vue composition api plugin + Vuetify development template
 
-All latest stable dependencies.
+Vue 2 + composition API and other stuff
 Eslint still needs some tweaking for Vue v2.

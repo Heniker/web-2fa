@@ -2,12 +2,22 @@
   <v-app class="app">
     <v-app-bar app class="app-bar">
       <v-spacer />
+      <v-col cols="1">
+        <v-select flat dense hide-details :items="langs" class="mx-auto" label="Solo field" solo v-model="$i18n.locale"></v-select>
+        <div class="locale-changer">
+          <!-- <select v-model="$i18n.locale">
+            <option v-for="(lang, i) in langs" :key="`Lang${i}`" :value="lang">
+              {{ lang }}
+            </option>
+          </select> -->
+        </div>
+      </v-col>
     </v-app-bar>
 
     <v-main class="main-content">
       <v-card tile flat>
         <v-toolbar flat dark>
-          <v-toolbar-title>User Profile</v-toolbar-title>
+          <v-toolbar-title>{{ $t('hello') }}</v-toolbar-title>
         </v-toolbar>
         <v-tabs vertical hide-slider class="border-bottom">
           <v-tab class="v-tab--disabled tab-width my-auto">
@@ -84,6 +94,7 @@ export default v.defineComponent({
   components: { BetterTable },
   setup() {
     return {
+      langs: ['en', 'ja', 'ru'],
       headers: [
         { text: 'Category', value: '' },
         {
@@ -181,3 +192,13 @@ export default v.defineComponent({
   border-right: 1px solid #ebebeb;
 }
 </style>
+
+<i18n lang="yaml" locale="en">
+'hello': 'hello, world!'
+</i18n>
+<i18n lang="yaml" locale="ru">
+'hello': 'привет, мир!'
+</i18n>
+<i18n lang="yaml" locale="ja">
+'hello': 'こんにちは、世界！'
+</i18n>

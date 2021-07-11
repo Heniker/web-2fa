@@ -1,5 +1,3 @@
-/* eslint-disable */
-const assert = require('assert')
 const path = require('path')
 const webpack = require('webpack')
 const WebpackBundleAnalyzer = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
@@ -9,71 +7,33 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
-const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const { getPortPromise } = require('portfinder')
 
-// known issues
+// known issues:
 // https://github.com/vuetifyjs/vuetify/issues/13694
+// webpack types are broken across packages
 
-const defaults = {
-  mode: 'development',
-  outputPath: path.resolve(__dirname, './dist'),
-  target: 'web',
-  port: 8080,
-  htmlTemplate: path.resolve(__dirname, './public/index.html'),
-  entry: path.resolve(__dirname, './src/main.ts'),
-}
+/**
+ * @typedef {object} EnvT
+ * @property {boolean} WEBPACK_SERVE
+ */
 
-const getMode = (env, argv) => {
-  let mode = null
+/**
+ *
+ * @param {EnvT} _
+ * @param {{entry: string[], mode: string, env: EnvT}} argv
+ */
+module.exports = async (_, argv) => {
+  const isDev = argv.mode === 'development'
+  const isServer = !!argv.env.WEBPACK_SERVE
+  const port = isServer ? await getPortPromise({ port: 8080 }) : null
+  const htmlTemplate = path.resolve(__dirname, './public/index.html')
 
-  const prodTags = ['prod', 'production']
-  // const devTags = ['dev', 'develop', 'development']
-
-  if (argv.mode && prodTags.includes(argv.mode)) {
-    mode = 'production'
-  } else if (env.BUILD_MODE && prodTags.includes(env.BUILD_MODE)) {
-    mode = 'production'
-  } else if (env.NODE_ENV && prodTags.includes(env.NODE_ENV)) {
-    mode = 'production'
-  } else {
-    mode = defaults.mode
-  }
-
-  return mode
-}
-
-const getTarget = (env, argv) => argv.target || defaults.target
-
-const getEntryPath = (env, argv) => {
-  // const entry = argv.entry[0] || (argv._ && argv._[0]) || defaults.entry // old webpack version, needs update
-  const entry = defaults.entry
-  assert(entry, 'Please provide webpack entry')
-  return path.resolve(__dirname, entry)
-}
-
-const getOutputPath = (env, argv) =>
-  argv.output ? path.resolve(__dirname, argv.output) : defaults.outputPath
-
-module.exports = async (env = process.env, argv = {}) => {
-  const mode = getMode(env, argv)
-  const target = getTarget(env, argv)
-  const outputPath = getOutputPath(env, argv)
-  const entryPath = getEntryPath(env, argv)
-  const port = await getPortPromise({ port: defaults.port })
-
-  const isDev = mode === 'development'
-  const isServer = !!process.env.WEBPACK_DEV_SERVER
-
-  console.log(
-    `\n\nwebpack mode: ${mode}\ncompiling: ${entryPath}${isServer ? `\nport:${port}` : ''}\n\n`
-  )
-
-  return {
-    mode,
-    target,
+  /**
+   * @type {import('webpack').Configuration}
+   */
+  const result = {
     devtool: isDev ? 'source-map' : false,
-    entry: entryPath,
     resolve: {
       extensions: ['.js', '.vue', '.ts'],
       alias: {
@@ -85,7 +45,6 @@ module.exports = async (env = process.env, argv = {}) => {
       minimize: !isDev,
       minimizer: [
         new TerserPlugin({
-          parallel: true,
           // sourceMap: true,
 
           terserOptions: {
@@ -270,29 +229,29 @@ module.exports = async (env = process.env, argv = {}) => {
         },
       ],
     },
-    devServer: {
-      contentBase: outputPath,
-      compress: true,
-      // host: '0.0.0.0',
-      historyApiFallback: true,
-      hot: true,
-      index: entryPath,
-      open: false,
-      overlay: true,
-      port,
-      stats: {
-        normal: true,
-      },
-    },
+    devServer: isServer
+      ? {
+          // contentBase: outputPath,
+          compress: true,
+          // host: '0.0.0.0',
+          historyApiFallback: true,
+          hot: true,
+          // index: entryPath,
+          open: false,
+          overlay: true,
+          port,
+          stats: {
+            normal: true,
+          },
+        }
+      : undefined,
     performance: {
       hints: 'warning',
     },
     plugins: [
-      new CleanWebpackPlugin(),
       new VueLoaderPlugin(),
       new VuetifyLoaderPlugin(),
       new webpack.DefinePlugin({
-        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
         'process.env.DEBUG': JSON.stringify(process.env.DEBUG),
       }),
       new webpack.ProvidePlugin({
@@ -300,7 +259,7 @@ module.exports = async (env = process.env, argv = {}) => {
       }),
       new HtmlWebpackPlugin({
         // favicon: 'public/favicon.ico',
-        template: defaults.htmlTemplate,
+        template: htmlTemplate,
       }),
       new MiniCssExtractPlugin({
         // Options similar to the same options in webpackOptions.output
@@ -313,13 +272,15 @@ module.exports = async (env = process.env, argv = {}) => {
       ...(isServer ? [] : [new WebpackBundleAnalyzer()]),
     ],
     output: {
+      clean: true,
       // filename: 'js/[name].[contenthash].js',
       // globalObject: 'self',
       filename: 'js/[name].[hash].js',
       publicPath: '/',
       chunkFilename: 'js/[id].[hash].bundle.js',
-      path: outputPath,
       libraryTarget: 'umd',
     },
   }
+
+  return result
 }
