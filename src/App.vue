@@ -3,14 +3,16 @@
     <v-app-bar app class="app-bar">
       <v-spacer />
       <v-col cols="1">
-        <v-select flat dense hide-details :items="langs" class="mx-auto" label="Solo field" solo v-model="$i18n.locale"></v-select>
-        <div class="locale-changer">
-          <!-- <select v-model="$i18n.locale">
-            <option v-for="(lang, i) in langs" :key="`Lang${i}`" :value="lang">
-              {{ lang }}
-            </option>
-          </select> -->
-        </div>
+        <v-select
+          flat
+          dense
+          hide-details
+          :items="langs"
+          class="mx-auto"
+          label="Solo field"
+          solo
+          v-model="$i18n.locale"
+        ></v-select>
       </v-col>
     </v-app-bar>
 

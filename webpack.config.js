@@ -1,7 +1,7 @@
 const path = require('path')
 const webpack = require('webpack')
 const WebpackBundleAnalyzer = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
-const VueLoaderPlugin = require('vue-loader/lib/plugin')
+const { VueLoaderPlugin } = require('vue-loader')
 const TerserPlugin = require('terser-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
@@ -30,7 +30,7 @@ module.exports = async (_, argv) => {
   const htmlTemplate = path.resolve(__dirname, './public/index.html')
 
   /**
-   * @type {import('webpack').Configuration}
+   * @type {import('webpack').Configuration & {devServer: any}}
    */
   const result = {
     devtool: isDev ? 'source-map' : false,
@@ -117,7 +117,7 @@ module.exports = async (_, argv) => {
         {
           resourceQuery: /blockType=i18n/,
           type: 'javascript/auto',
-          loader: '@kazupon/vue-i18n-loader',
+          loader: '@intlify/vue-i18n-loader',
         },
         {
           test: /\.tsx?$/,
@@ -231,23 +231,23 @@ module.exports = async (_, argv) => {
     },
     devServer: isServer
       ? {
-          // contentBase: outputPath,
+          static: false,
+          client: {
+            overlay: false,
+          },
           compress: true,
           // host: '0.0.0.0',
           historyApiFallback: true,
           hot: true,
           // index: entryPath,
           open: false,
-          overlay: true,
           port,
-          stats: {
-            normal: true,
-          },
         }
       : undefined,
     performance: {
-      hints: 'warning',
+      hints: false,
     },
+    stats: 'summary',
     plugins: [
       new VueLoaderPlugin(),
       new VuetifyLoaderPlugin(),
