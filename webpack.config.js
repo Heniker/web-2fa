@@ -11,7 +11,6 @@ const { getPortPromise } = require('portfinder')
 
 // known issues:
 // https://github.com/vuetifyjs/vuetify/issues/13694
-// webpack types are broken across packages
 
 /**
  * @typedef {object} EnvT
@@ -86,16 +85,6 @@ module.exports = async (_, argv) => {
       splitChunks: {
         // chunks: 'initial',
         chunks: 'all',
-        cacheGroups: {
-          // carefull with using this as it might actually increase bundle size
-          // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-2
-          // https://webpack.js.org/guides/caching/
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
       },
     },
     module: {
@@ -123,13 +112,6 @@ module.exports = async (_, argv) => {
           test: /\.tsx?$/,
           exclude: /node_modules/,
           use: [
-            // {
-            // loader: 'babel-loader',
-            // options: {
-            //   presets: ['@babel/preset-env'],
-            //   plugins: ['@babel/plugin-proposal-do-expressions'],
-            // },
-            // },
             {
               loader: 'ts-loader',
               options: {
@@ -139,7 +121,6 @@ module.exports = async (_, argv) => {
           ],
         },
         {
-          // test: /\.(woff(2)?|png|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
           test: /\.(woff(2)?|png|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
           use: [
             {
@@ -147,7 +128,6 @@ module.exports = async (_, argv) => {
               options: {
                 name: '[name].[ext]',
                 outputPath: 'assets',
-                // publicPath: path.relative(outputPath, '/static'),
               },
             },
           ],
@@ -155,7 +135,7 @@ module.exports = async (_, argv) => {
         {
           test: /\.s(c|a)ss$/,
           use: [
-            isDev ? 'vue-style-loader' : MiniCssExtractPlugin.loader,
+            isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
             {
               loader: 'css-loader',
               options: {
@@ -173,7 +153,7 @@ module.exports = async (_, argv) => {
         {
           test: /\.less$/,
           use: [
-            isDev ? 'vue-style-loader' : MiniCssExtractPlugin.loader,
+            isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
             {
               loader: 'css-loader',
               options: {
@@ -186,7 +166,7 @@ module.exports = async (_, argv) => {
         {
           test: /\.styl(us)?$/,
           use: [
-            isDev ? 'vue-style-loader' : MiniCssExtractPlugin.loader,
+            isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
             {
               loader: 'css-loader',
               options: {
@@ -202,7 +182,7 @@ module.exports = async (_, argv) => {
             {
               resourceQuery: /module/,
               use: [
-                isDev ? 'vue-style-loader' : MiniCssExtractPlugin.loader,
+                isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
                 {
                   loader: 'css-loader',
                   options: {
@@ -239,7 +219,6 @@ module.exports = async (_, argv) => {
           // host: '0.0.0.0',
           historyApiFallback: true,
           hot: true,
-          // index: entryPath,
           open: false,
           port,
         }
@@ -262,23 +241,23 @@ module.exports = async (_, argv) => {
         template: htmlTemplate,
       }),
       new MiniCssExtractPlugin({
-        // Options similar to the same options in webpackOptions.output
-        // all options are optional
-        // filename: 'style/[name].[/*  */contenthash].css',
         filename: 'style/[name].[hash].css',
         chunkFilename: 'style/[id].[hash].css',
-        ignoreOrder: false, // Enable to remove warnings about conflicting order
+        ignoreOrder: false,
       }),
-      ...(isServer ? [] : [new WebpackBundleAnalyzer()]),
+      ...(isServer ? [] : [new WebpackBundleAnalyzer({ openAnalyzer: false })]),
     ],
     output: {
       clean: true,
-      // filename: 'js/[name].[contenthash].js',
-      // globalObject: 'self',
       filename: 'js/[name].[hash].js',
       publicPath: '/',
       chunkFilename: 'js/[id].[hash].bundle.js',
       libraryTarget: 'umd',
+    },
+    experiments: {
+      futureDefaults: true,
+      topLevelAwait: true,
+      // lazyCompilation: isDev && isServer, // lazy compilation does not do much in this case
     },
   }
 
