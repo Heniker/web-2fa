@@ -1,16 +1,10 @@
-import Vue from 'vue'
-import Vuetify from 'vuetify/lib'
-import { Ripple } from 'vuetify/lib/directives'
+// import 'vuetify/styles'
+// import { createVuetify } from 'vuetify'
 
-Vue.use(Vuetify)
+// const vuetify = createVuetify({
+//   theme: {
+//     defaultTheme: 'dark',
+//   },
+// })
 
-const vuetify = new Vuetify({
-  theme: {
-    dark: true,
-  },
-  directives: {
-    Ripple,
-  },
-})
-
-export { vuetify }
+// export { vuetify }
