@@ -1,7 +1,7 @@
 import { VueLoaderPlugin } from 'vue-loader'
-import { getPortPromise } from 'portfinder'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
+import webpack from 'webpack'
 
 /**
  * @typedef {object} EnvT
@@ -16,7 +16,6 @@ import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 export default async (_, argv) => {
   const isDev = argv.mode === 'development'
   const isServer = !!argv.env.WEBPACK_SERVE
-  const port = isServer ? await getPortPromise({ port: 8080 }) : null
   const htmlTemplate = './public/index.html'
 
   /**
@@ -61,9 +60,12 @@ export default async (_, argv) => {
       historyApiFallback: true,
       hot: true,
       open: false,
-      port,
     },
     plugins: [
+      new webpack.DefinePlugin({
+        __VUE_OPTIONS_API__: false,
+        __VUE_PROD_DEVTOOLS__: false,
+      }),
       new MiniCssExtractPlugin(),
       new VueLoaderPlugin(),
       new HtmlWebpackPlugin({
