@@ -22,7 +22,7 @@ v.onMounted(() => {
 })
 </script>
 
-<style>
+<style scoped>
 .test {
   color: red;
 }
