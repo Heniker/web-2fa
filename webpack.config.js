@@ -1,6 +1,7 @@
 import { VueLoaderPlugin } from 'vue-loader'
 import { getPortPromise } from 'portfinder'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
+import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 
 /**
  * @typedef {object} EnvT
@@ -40,29 +41,30 @@ export default async (_, argv) => {
               loader: 'ts-loader',
               options: {
                 appendTsSuffixTo: [/\.vue$/],
+                transpileOnly: true,
               },
             },
           ],
         },
+        {
+          test: /\.css$/,
+          use: [isDev ? 'style-loader' : MiniCssExtractPlugin.loader, 'css-loader'],
+        },
       ],
     },
-    devServer: isServer
-      ? {
-          static: false,
-          client: {
-            overlay: false,
-          },
-          compress: true,
-          historyApiFallback: true,
-          hot: true,
-          open: false,
-          port,
-        }
-      : undefined,
-    performance: {
-      hints: false,
+    devServer: isServer && {
+      static: false,
+      client: {
+        overlay: false,
+      },
+      compress: true,
+      historyApiFallback: true,
+      hot: true,
+      open: false,
+      port,
     },
     plugins: [
+      new MiniCssExtractPlugin(),
       new VueLoaderPlugin(),
       new HtmlWebpackPlugin({
         template: htmlTemplate,

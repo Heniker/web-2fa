@@ -1,19 +1,8 @@
 {
+  "extends": "@vue/tsconfig/tsconfig.web.json",
   "compilerOptions": {
-    "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "sourceMap": true,
-    "target": "ES2020",
-    "module": "ESNext",
-    "lib": ["DOM", "ESNext", "ES6", "DOM.Iterable"],
-    "downlevelIteration": true,
-    "moduleResolution": "node",
-    "importHelpers": true,
-    "typeRoots": ["./node_modules/@types"],
-    "baseUrl": ".",
-    "jsx": "preserve"
+    "baseUrl": "."
   },
-  "include": ["src"],
+  "include": ["src/**/*", "src/**/*.vue"],
   "typeAcquisition": { "enable": true }
 }
