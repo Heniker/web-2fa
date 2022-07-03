@@ -2,7 +2,8 @@
   "type": "module",
   "scripts": {
     "build": "vue-tsc --noEmit && webpack ./src/main.ts --mode=production",
-    "dev": "webpack serve ./src/main.ts --mode=development"
+    "dev": "webpack serve ./src/main.ts --mode=development",
+    "serve": "npm run dev"
   },
   "dependencies": {
     "vue": "^3.2.36"

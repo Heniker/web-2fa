@@ -51,15 +51,17 @@ export default async (_, argv) => {
         },
       ],
     },
-    devServer: isServer && {
-      static: false,
-      client: {
-        overlay: false,
-      },
-      compress: true,
-      historyApiFallback: true,
-      hot: true,
-      open: false,
+    devServer: {
+      ...(isServer && {
+        static: false,
+        client: {
+          overlay: false,
+        },
+        compress: true,
+        historyApiFallback: true,
+        hot: true,
+        open: false,
+      }),
     },
     plugins: [
       new webpack.DefinePlugin({
@@ -77,6 +79,11 @@ export default async (_, argv) => {
       filename: 'js/[name].[contenthash].js',
       publicPath: '/',
       chunkFilename: 'js/[id].[contenthash].bundle.js',
+    },
+    node: {
+      global: false,
+      __filename: false,
+      __dirname: false,
     },
     experiments: {
       futureDefaults: true,
