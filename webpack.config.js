@@ -1,3 +1,4 @@
+import { VuetifyPlugin } from 'webpack-plugin-vuetify'
 import { VueLoaderPlugin } from 'vue-loader'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
@@ -22,8 +23,11 @@ export default async (_, argv) => {
    * @type {import('webpack').Configuration & {devServer: any}}
    */
   const result = {
-    devtool: isDev ? 'source-map' : false,
+    devtool: false,
     resolve: {
+      alias: {
+        vue: 'vue/dist/vue.runtime.esm-bundler',
+      },
       extensions: ['.js', '.vue', '.ts'],
     },
     module: {
@@ -46,8 +50,16 @@ export default async (_, argv) => {
           ],
         },
         {
-          test: /\.css$/,
-          use: [isDev ? 'style-loader' : MiniCssExtractPlugin.loader, 'css-loader'],
+          test: /\.css$/i,
+          use: [
+            isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
+            {
+              loader: 'css-loader',
+              options: {
+                sourceMap: isDev,
+              },
+            },
+          ],
         },
       ],
     },
@@ -70,6 +82,7 @@ export default async (_, argv) => {
       }),
       new MiniCssExtractPlugin(),
       new VueLoaderPlugin(),
+      new VuetifyPlugin(),
       new HtmlWebpackPlugin({
         template: htmlTemplate,
       }),
@@ -84,10 +97,6 @@ export default async (_, argv) => {
       global: false,
       __filename: false,
       __dirname: false,
-    },
-    experiments: {
-      futureDefaults: true,
-      topLevelAwait: true,
     },
   }
 
