@@ -24,12 +24,7 @@ export default v.defineComponent({
     })
 
     return { secondsPassed }
-  },
-
-  template: `
-    <button @click="count++">
-      You clicked me {{ count }} times.
-    </button>`,
+  }
 })
 </script>
 
