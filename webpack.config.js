@@ -23,7 +23,7 @@ export default async (_, argv) => {
    * @type {import('webpack').Configuration & {devServer: any}}
    */
   const result = {
-    devtool: false,
+    devtool: isDev ? 'source-map' : false,
     resolve: {
       alias: {
         // > uncomment if runtime template compiler is required
