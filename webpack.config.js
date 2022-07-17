@@ -16,7 +16,7 @@ import webpack from 'webpack'
  */
 export default async (_, argv) => {
   const isDev = argv.mode === 'development'
-  const isServer = !!argv.env.WEBPACK_SERVE
+  const isServe = !!argv.env.WEBPACK_SERVE
   const htmlTemplate = './public/index.html'
 
   /**
@@ -26,8 +26,9 @@ export default async (_, argv) => {
     devtool: false,
     resolve: {
       alias: {
-        vue: 'vue/dist/vue.runtime.esm-bundler',
-      },
+        // > uncomment if runtime template compiler is required
+        // vue: 'vue/dist/vue.esm-bundler.js'
+      }
       extensions: ['.js', '.vue', '.ts'],
     },
     module: {
@@ -64,7 +65,7 @@ export default async (_, argv) => {
       ],
     },
     devServer: {
-      ...(isServer && {
+      ...(isServe && {
         static: false,
         client: {
           overlay: false,
