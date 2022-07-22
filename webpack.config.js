@@ -74,7 +74,7 @@ export default async (_, argv) => {
                 {
                   loader: 'css-loader',
                   options: {
-                    sourceMap: isDev,
+                    modules: { localIdentName: isDev ? '[path][name]__[local]' : '[hash:base64]' },
                   },
                 },
               ],
