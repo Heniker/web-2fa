@@ -69,13 +69,13 @@ export default async (_, argv) => {
               ],
             },
             {
-          use: [
-            isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
-            {
-              loader: 'css-loader',
-              options: {
-                sourceMap: isDev,
-              },
+              use: [
+                isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
+                {
+                  loader: 'css-loader',
+                  options: {
+                    sourceMap: isDev,
+                  },
                 },
               ],
             },
