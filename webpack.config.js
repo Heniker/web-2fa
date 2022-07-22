@@ -27,7 +27,7 @@ export default async (_, argv) => {
       alias: {
         // > uncomment if runtime template compiler is required
         // vue: 'vue/dist/vue.esm-bundler.js'
-      }
+      },
       extensions: ['.js', '.vue', '.ts'],
     },
     module: {
