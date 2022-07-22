@@ -2,7 +2,7 @@
   <v-app>
     <v-card>
       <div>
-        <h1 class="test">Hello World</h1>
+        <h1 :class="$style.test">Hello World</h1>
         <p>This is a simple example of a Vue.js component.</p>
       </div>
       You've been looking at this page for {{ secondsPassed }} seconds.
@@ -32,7 +32,7 @@ export default v.defineComponent({
 })
 </script>
 
-<style>
+<style module>
 .test {
   color: red;
 }

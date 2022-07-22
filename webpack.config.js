@@ -52,6 +52,23 @@ export default async (_, argv) => {
         },
         {
           test: /\.css$/i,
+          oneOf: [
+            {
+              resourceQuery: /module/,
+              use: [
+                isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
+                {
+                  loader: 'css-loader',
+                  options: {
+                    modules: {
+                      mode: 'pure',
+                      localIdentName: isDev ? '[path][name]__[local]' : '[hash:base64]',
+                    },
+                  },
+                },
+              ],
+            },
+            {
           use: [
             isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
             {
@@ -59,6 +76,8 @@ export default async (_, argv) => {
               options: {
                 sourceMap: isDev,
               },
+                },
+              ],
             },
           ],
         },
