@@ -51,7 +51,15 @@ export default async (_, argv) => {
         },
         {
           test: /\.css$/,
-          use: [isDev ? 'style-loader' : MiniCssExtractPlugin.loader, 'css-loader'],
+          use: [
+            isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
+            {
+              loader: 'css-loader',
+              options: {
+                modules: { localIdentName: isDev ? '[path][name]__[local]' : '[hash:base64]' },
+              },
+            },
+          ],
         },
       ],
     },
