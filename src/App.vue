@@ -1,12 +1,11 @@
 <template>
-  <v-app>
-    <v-card>
-      <div>
-        <h1 :class="$style.test">Hello World</h1>
-        <p>This is a simple example of a Vue.js component.</p>
-      </div>
-      You've been looking at this page for {{ secondsPassed }} seconds.
-    </v-card>
+  <v-app class="main">
+  <!-- <v-app :class="$style.main"> -->
+    <v-app-bar></v-app-bar>
+    <v-main>
+      <router-view>
+      </router-view>
+    </v-main>
   </v-app>
 </template>
 
@@ -14,26 +13,14 @@
 import * as v from 'vue'
 
 export default v.defineComponent({
-  setup() {
-    const secondsPassed = v.ref(0)
-
-    v.onMounted(() => {
-      const interval = setInterval(() => {
-        secondsPassed.value++
-      }, 1000)
-
-      v.onUnmounted(() => {
-        clearInterval(interval)
-      })
-    })
-
-    return { secondsPassed }
-  }
+  setup() { }
 })
 </script>
 
 <style module>
-.test {
-  color: red;
+.main {
+  width: 100vw;
+  height: 100vh;
+  background-color: rgb(126, 88, 189);
 }
 </style>
