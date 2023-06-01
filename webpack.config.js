@@ -2,6 +2,7 @@ import { VuetifyPlugin } from 'webpack-plugin-vuetify'
 import { VueLoaderPlugin } from 'vue-loader'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
+import * as VueTemplateCompiler from 'vue/compiler-sfc'
 import webpack from 'webpack'
 
 /**
@@ -25,11 +26,16 @@ export default async (_, argv) => {
   const result = {
     devtool: isDev ? 'source-map' : false,
     resolve: {
+      modules: ['node_modules', '.'],
       alias: {
+        '@': 'src',
         // > uncomment if runtime template compiler is required
         // vue: 'vue/dist/vue.esm-bundler.js'
       },
       extensions: ['.js', '.vue', '.ts'],
+    },
+    optimization: {
+      moduleIds: 'deterministic',
     },
     module: {
       rules: [
@@ -46,6 +52,7 @@ export default async (_, argv) => {
               options: {
                 appendTsSuffixTo: [/\.vue$/],
                 transpileOnly: true,
+                onlyCompileBundledFiles: true,
               },
             },
           ],
@@ -74,8 +81,7 @@ export default async (_, argv) => {
                 {
                   loader: 'css-loader',
                   options: {
-                    exportType: "array",
-                    modules: true,
+                    // modules: true,
                     // modules: { localIdentName: isDev ? '[path][name]__[local]' : '[hash:base64]' },
                   },
                 },
@@ -101,10 +107,15 @@ export default async (_, argv) => {
       new webpack.DefinePlugin({
         __VUE_OPTIONS_API__: false,
         __VUE_PROD_DEVTOOLS__: false,
+        'process.env.NODE_DEBUG': JSON.stringify(process.env.NODE_DEBUG),
+        'process.version': JSON.stringify(process.version),
       }),
-      new MiniCssExtractPlugin(),
+      new webpack.ProvidePlugin({
+        assert: 'assert',
+      }),
+      // new MiniCssExtractPlugin(),
       new VueLoaderPlugin(),
-      new VuetifyPlugin(),
+      new VuetifyPlugin({}),
       new HtmlWebpackPlugin({
         template: htmlTemplate,
       }),
@@ -119,6 +130,10 @@ export default async (_, argv) => {
       global: false,
       __filename: false,
       __dirname: false,
+    },
+    experiments: {
+      topLevelAwait: true,
+      cacheUnaffected: true,
     },
   }
 

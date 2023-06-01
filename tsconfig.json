@@ -1,7 +1,18 @@
 {
   "extends": "@vue/tsconfig/tsconfig.web.json",
   "compilerOptions": {
-    "baseUrl": "."
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitAny": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["webpack", "webpack-env"],
+    "typeRoots": ["./src"],
+    "target": "ES2021",
+    "useDefineForClassFields": true,
+    "paths": {
+      "@/*": ["./src/*"],
+    },
+    "ignoreDeprecations": "5.0"
   },
   "include": ["src/**/*", "src/**/*.vue"],
   "typeAcquisition": { "enable": true }
