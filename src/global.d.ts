@@ -1,4 +1,5 @@
-import { LocalStorageDataI } from './_types'
+import { KeyValStorageDataI } from './_types'
+import { useDisplay } from 'vuetify'
 
 type Falsy = false | 0 | '' | null | undefined
 type AssertT = (condition: any, msg?: string) => asserts condition
@@ -7,6 +8,7 @@ type PickByValue<T, V> = Pick<T, { [K in keyof T]: T[K] extends V ? K : never }[
 declare module 'vue' {
   interface ComponentCustomProperties {
     console: Console
+    display: ReturnType<typeof useDisplay>
   }
 
   interface ComponentCustomProps {
@@ -24,6 +26,12 @@ declare global {
     //   params?: RouteParamsRaw;
     // }
     // type RouteRecordName = RouteRecordName | number;
+  }
+
+  interface NumberConstructor {
+    (value: Boolean): 1 | 0
+    (value: true): 1
+    (value: false): 0
   }
 
   interface Array<T> {

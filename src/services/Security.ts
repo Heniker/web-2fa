@@ -1,7 +1,9 @@
 import * as v from 'vue'
+import { managedPromise } from '@/util'
 import { ServiceA } from './_Service'
 import { appInject } from './util'
 import { PersistentStorage } from './PersistentStorage'
+import { until } from '@vueuse/core'
 
 export class Security extends ServiceA {
   static token = Symbol() as v.InjectionKey<Security>
@@ -9,54 +11,68 @@ export class Security extends ServiceA {
   @appInject(PersistentStorage.token)
   private accessor persistentStorage!: PersistentStorage
 
-  reactive = undefined
+  private encryptionKey?: CryptoKey
+  private encryptionIv?: Uint8Array
 
-  contextSetUp = new Promise<void>((resolve) => (this.contextSetUpResolve = resolve))
-  private contextSetUpResolve!: () => void
+  reactive = v.reactive({ isContextSetUp: false })
 
-  encrypt: (data: string) => Promise<string> | void = assert.bind(
-    {},
-    false,
-    'Encryption is not initialized'
-  )
-  decrypt: (data: string) => Promise<string> | void = assert.bind(
-    false,
-    'Decryption is not initialized'
-  )
+  async encrypt(data: string) {
+    await until(v.toRef(this.reactive, 'isContextSetUp')).toBe(true)
+
+    assert(this.encryptionKey)
+    assert(this.encryptionIv)
+
+    return crypto.subtle
+      .encrypt(
+        { name: 'AES-GCM', iv: this.encryptionIv },
+        this.encryptionKey,
+        new TextEncoder().encode(data)
+      )
+      .then((arg) => new Uint8Array(arg))
+  }
+
+  async decrypt(data: Uint8Array) {
+    await until(v.toRef(this.reactive, 'isContextSetUp')).toBe(true)
+
+    assert(this.encryptionKey)
+    assert(this.encryptionIv)
+
+    return crypto.subtle
+      .decrypt({ name: 'AES-GCM', iv: this.encryptionIv }, this.encryptionKey, data)
+      .then((arg) => new TextDecoder().decode(arg))
+  }
 
   constructor() {
     super()
   }
 
+  /**
+   * Password should not be accessible from outside - that's why this function exists
+   */
   async setupSecureContext(plainTextPass: string) {
-    const key = await crypto.subtle.importKey(
+    await 1
+
+    if (this.encryptionKey) {
+      return
+    }
+
+    this.encryptionKey = await crypto.subtle.importKey(
       'raw',
       await crypto.subtle.digest('SHA-256', new TextEncoder().encode(plainTextPass)),
       'AES-GCM',
       false,
       ['encrypt', 'decrypt']
     )
-    plainTextPass = ''
 
-    const iv =
-      this.persistentStorage.reactive['secure-iv'] ||
-      (this.persistentStorage.reactive['secure-iv'] = crypto.getRandomValues(new Uint8Array(12)))
+    let secureIv = await this.persistentStorage.getItem('secure-iv')
 
-    const encryptionAlgorithm = {
-      name: 'AES-GCM',
-      iv,
+    if (!secureIv || secureIv.length === 0) {
+      console.log('No secure-iv found in storage. Generating a new one')
+      secureIv = crypto.getRandomValues(new Uint8Array(12))
+      await this.persistentStorage.setItem('secure-iv', secureIv)
     }
 
-    this.encrypt = (data: string) =>
-      crypto.subtle
-        .encrypt(encryptionAlgorithm, key, new TextEncoder().encode(data))
-        .then((arg) => new TextDecoder().decode(arg))
-
-    this.decrypt = (data: string) =>
-      crypto.subtle
-        .decrypt(encryptionAlgorithm, key, new TextEncoder().encode(data))
-        .then((arg) => new TextDecoder().decode(arg))
-
-    this.contextSetUpResolve()
+    this.encryptionIv = secureIv
+    this.reactive.isContextSetUp = true
   }
 }

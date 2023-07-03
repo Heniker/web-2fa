@@ -1,12 +1,15 @@
 <template>
   <v-app :class="$style.main">
-    <v-app-bar></v-app-bar>
+    <div id="app-bar-portal" :class="$style.portal">
+      <!-- <v-app-bar></v-app-bar> -->
+    </div>
     <v-main>
-      <router-view>
-      </router-view>
+      <router-view></router-view>
     </v-main>
   </v-app>
-  <div id="app-portal" :class="$style.overlay"></div>
+  <!-- <div id="app-overlay-portal" :class="[$style.overlay, $style.portal]"></div> -->
+  <div id="app-overlay-portal" :class="$style.overlay"></div>
+  <div id="app-bottom-portal" :class="$style.portal"></div>
 </template>
 
 <script lang="ts">
@@ -15,8 +18,7 @@ import { useRoute } from 'vue-router'
 
 export default v.defineComponent({
   setup() {
-    
-    return { }
+    return {}
   },
 })
 </script>
@@ -28,15 +30,22 @@ export default v.defineComponent({
   /* overflow: hidden; */
 }
 
-.overlay {
-  top: 0;
-  backdrop-filter: grayscale(0.5) blur(2px);
-  position: fixed;
-  z-index: 10;
-  width: 100vw;
-  height: 100vh;
+.portal {
+  display: contents;
 }
 
+.portal:empty {
+  display: none;
+}
+
+.overlay {
+  left: 0;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 2000; /* Vuetify uses z-index 1000 */
+}
 .overlay:empty {
   display: none;
 }
@@ -56,7 +65,7 @@ export default v.defineComponent({
   image-rendering: smooth;
   image-rendering: optimizeQuality;
 
-  overflow: hidden;
+  overflow: auto;
 }
 
 /* a {
@@ -66,8 +75,14 @@ export default v.defineComponent({
 
 * {
   box-sizing: border-box;
-  contain: content;
-  content-visibility: auto;
+  
+  /* 
+  If something breaks you  won't debug it.
+  Also, the performace difference is marginal.
+  (should rather stop using so much JS code, lol) 
+  */
+  /* contain: style; 
+  content-visibility: auto; */
 }
 
 .fade-enter-active,

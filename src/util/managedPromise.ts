@@ -1,86 +1,93 @@
 const promisesMap = new Map<
   PromiseLike<any>,
-  { resolve: (value: any) => any; reject: (value: any) => any; reset: () => void }
+  {
+    status: 'resolved' | 'rejected' | ''
+    result: any
+    resolve: (value: any) => any
+    reject: (value: any) => any
+  }
 >()
 
 export const make = <T>() => {
-  let resultValue: any // resolved or rejected value
-  let status: 'resolved' | 'rejected' | undefined = undefined
-
   const promise = {
     then(onresolve, onreject) {
-      if (status === 'resolved') {
-        onresolve?.(resultValue)
+      const saved = promisesMap.get(this)
+      assert(saved) // can actually never happen
+
+      if (saved.status === 'resolved') {
+        onresolve?.(saved.result)
         return this
       }
 
-      if (status === 'rejected') {
-        onreject?.(resultValue)
+      if (saved.status === 'rejected') {
+        onreject?.(saved.result)
         return this
       }
 
-      const saved =
-        promisesMap.get(this) ||
-        (promisesMap.set(this, {
-          resolve: (arg) => {
-            if (status) {
-              return
-            }
-
-            resultValue = arg
-            status = 'resolved'
+      promisesMap.set(
+        this,
+        Object.assign({}, saved, {
+          resolve: (arg: any) => {
+            saved.resolve(arg)
+            onresolve?.(arg)
           },
-          reject: (arg) => {
-            if (status) {
-              return
-            }
-
-            resultValue = arg
-            status = 'rejected'
+          reject: (arg: any) => {
+            saved.reject(arg)
+            onreject?.(arg)
           },
-          reset: () => {
-            resultValue = undefined
-            status = undefined
-            promisesMap.delete(this)
-          },
-        }),
-        promisesMap.get(this))
-
-      assert(saved) // can never happen, but makes TS happy
-
-      promisesMap.set(this, {
-        resolve: (arg) => {
-          saved.resolve(arg)
-          onresolve?.(arg)
-        },
-        reject: (arg) => {
-          saved.reject(arg)
-          onreject?.(arg)
-        },
-        reset: saved.reset,
-      })
+        })
+      )
 
       return this
     },
   } as PromiseLike<T>
 
+  promisesMap.set(promise, {
+    result: undefined,
+    status: '',
+
+    resolve(arg) {
+      if (this.status) {
+        return
+      }
+    },
+    reject(arg) {
+      if (this.status) {
+        return
+      }
+    },
+  })
+
   return promise
 }
 
-export const resolve = <T = void>(promise: Promise<T>, resolveArg?: T) => {
+export const resolve = <T = void>(promise: PromiseLike<T>, resolveArg?: T) => {
   const storedPromise = promisesMap.get(promise)
-  assert(storedPromise)
-  storedPromise.resolve(resolveArg)
+
+  if (storedPromise && storedPromise.status === '') {
+    storedPromise.status = 'resolved'
+    storedPromise.result = resolveArg
+
+    // technically promises are supposed to resolve on `queueMicrotask`, but why not make it sync
+    storedPromise.resolve(resolveArg)
+  }
 }
 
-export const reject = <T = void>(promise: Promise<T>, rejectArg: any = undefined) => {
+export const reject = <T = void>(promise: PromiseLike<T>, rejectArg: any = undefined) => {
   const storedPromise = promisesMap.get(promise)
-  assert(storedPromise)
-  storedPromise.reject(rejectArg)
+
+  if (storedPromise && storedPromise.status === '') {
+    storedPromise.status = 'rejected'
+    storedPromise.result = rejectArg
+
+    storedPromise.reject(rejectArg)
+  }
 }
 
-export const reset = <T = void>(promise: Promise<T>) => {
+export const reset = <T = void>(promise: PromiseLike<T>) => {
   const storedPromise = promisesMap.get(promise)
-  assert(storedPromise)
-  storedPromise.reset()
+  if (storedPromise) {
+    storedPromise.status = ''
+    storedPromise.result = undefined
+  }
 }

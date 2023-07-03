@@ -2,6 +2,41 @@ export * as managedPromise from './managedPromise'
 
 import * as v from 'vue'
 
+export const isResolved = <T>(promise: PromiseLike<T>) => {
+  const t = {}
+  return Promise.race([promise, t]).then(
+    (v) => v !== t,
+    () => false
+  )
+}
+
+/**
+ * if `init` is a function - it will be called when resulting ref is accessed for the first time.
+ * Resulting value will replace `startingValue`. Promises are awaited.
+ */
+export const useLazyInitRef = <T extends unknown>(startingValue: T, init: () => Promise<T>) => {
+  // #todo> this is not good. need to check if vueuse got something similar or implement this better
+  const rememberValue = v.toRef(startingValue)
+
+  let onGet = () => {
+    onGet = () => {}
+    init().then((arg) => (rememberValue.value = arg))
+  }
+
+  const result = v.computed<T>({
+    get: () => {
+      onGet()
+
+      return rememberValue.value as T
+    },
+    set: (arg: T) => {
+      rememberValue.value = arg
+    },
+  })
+
+  return result
+}
+
 export const useBetterResetRef = <T extends unknown>(
   defaultValueArg: v.Ref<T> | T,
   resetAfterArg: v.Ref<number> | number
@@ -82,3 +117,11 @@ export const ProvideValue = v.defineComponent({
     return () => v.renderSlot(slots, 'default', v.normalizeProps(writeableProps) || {})
   },
 })
+
+// https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
+export const seededRandom = (seed: number) => {
+  let t = (seed += 0x6d2b79f5)
+  t = Math.imul(t ^ (t >>> 15), t | 1)
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+}

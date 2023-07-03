@@ -6,11 +6,11 @@
     "noImplicitAny": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": ["webpack", "webpack-env"],
-    "typeRoots": ["./src"],
+    "typeRoots": ["./src", "./node_modules/@types"],
     "target": "ES2021",
     "useDefineForClassFields": true,
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./src/*"]
     },
     "ignoreDeprecations": "5.0"
   },

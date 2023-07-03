@@ -1,15 +1,24 @@
 import 'vuetify/lib/styles/main.css'
-import { createApp } from 'vue'
+import * as v from 'vue'
 import * as Router from 'vue-router'
-import { createVuetify } from 'vuetify'
-import PortalVue from 'portal-vue'
+import { createVuetify, useDisplay } from 'vuetify'
 import { buildPages } from 'vue-pages-builder'
 import * as services from './services'
 import App from './App.vue'
+import { appToken } from './services/util'
 
+{
+  // My way to run tests
+  const tests = require.context('.', true, /\.test\.ts/) // tests are ignored during prod build
+  tests.keys().forEach(tests)
+  // is obviously the best way
+}
+
+assert(globalThis, 'globalThis is not avaliable')
+assert(globalThis.indexedDB, 'indexedDB is not avaliable')
 assert(globalThis.crypto.subtle, 'crypto.subtle is not avaliable')
 
-const app = createApp(App)
+const app = v.createApp(App)
 const vuetify = createVuetify({
   theme: {
     defaultTheme: 'test',
@@ -47,7 +56,16 @@ app.use(vuetify)
 // PortalVue is used because native teleport is super buggy
 // https://github.com/vuejs/core/issues/5833
 // https://github.com/vuejs/core/issues/5594
-app.use(PortalVue)
+// app.use(PortalVue)
+
+app.runWithContext(() => {
+  // `useDisplay().mobile` won't be reactive in template for some reason - you have to add `.value`
+  // Probably vuetify bug, but I found no issues on github
+  app.config.globalProperties.display = v.reactive(useDisplay()) as any
+})
+
+app.config.globalProperties.window = window
+app.provide(appToken, app)
 
 // Create instances first THEN call .provide
 // Because services should not have a chance to use injected instances synchronously
@@ -55,13 +73,7 @@ Object.values(services)
   .map((it) => [it, app.runWithContext(() => new it())] as const)
   .forEach(([construct, instance]) => {
     // Do not forget to add `static token` to all services (TS enforces this here)
-
     app.provide(construct.token, instance)
   })
 
-app.config.globalProperties.window = window
-app.config.globalProperties.console = console
-
 app.mount('#app')
-
-export { app }

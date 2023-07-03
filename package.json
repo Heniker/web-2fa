@@ -5,19 +5,21 @@
     "dev": "webpack serve ./src/main.ts --mode=development",
     "serve": "npm run dev"
   },
+  "#portal-vue": "^3.0.0",
   "dependencies": {
     "@types/lodash": "^4.14.186",
+    "@vue/reactivity": "^3.3.4",
     "@vueuse/components": "^9.9.0",
     "@vueuse/core": "^9.3.0",
     "assert": "^2.0.0",
+    "idb-keyval": "^6.2.1",
     "lodash": "^4.17.21",
     "nanoid": "^4.0.2",
     "otpauth": "^8.0.3",
-    "portal-vue": "^3.0.0",
     "vue": "^3.3.4",
     "vue-pages-builder": "github:Heniker/vue-pages-builder",
     "vue-router": "^4.1.3",
-    "vuetify": "^3.0.0-beta.5"
+    "vuetify": "^3.3.5"
   },
   "devDependencies": {
     "@types/node": "^18.16.0",
