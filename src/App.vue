@@ -81,7 +81,7 @@ export default v.defineComponent({
   Also, the performace difference is marginal.
   (should rather stop using so much JS code, lol) 
   */
-  /* contain: style; 
+  /* contain: content;
   content-visibility: auto; */
 }
 

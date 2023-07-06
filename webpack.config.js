@@ -23,7 +23,7 @@ export default async (_, argv) => {
    * @type {import('webpack').Configuration & {devServer: any}}
    */
   const result = {
-    devtool: isDev ? 'source-map' : false,
+    devtool: isDev ? 'source-map' : 'source-map',
     resolve: {
       modules: ['node_modules', '.'],
       alias: {

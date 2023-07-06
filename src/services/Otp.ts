@@ -1,6 +1,6 @@
 import * as v from 'vue'
 import * as otp from 'otpauth'
-import { useBetterResetRef, useLazyInitRef } from '../util'
+import { persist, useBetterResetRef, useLazyInitRef } from '../util'
 import { PersistentStorage } from './PersistentStorage'
 import { ServiceA } from './_Service'
 import { appInject } from './util'
@@ -8,7 +8,7 @@ import { Security } from './Security'
 import type { TokenAlgorithmT, TokenI } from '@/_types'
 import * as _ from 'lodash'
 import { nanoid } from 'nanoid'
-import { useAsyncState, watchArray } from '@vueuse/core'
+import { useAsyncState, useInterval, watchArray } from '@vueuse/core'
 
 export class Otp extends ServiceA {
   static token = Symbol() as v.InjectionKey<Otp>
@@ -40,30 +40,37 @@ export class Otp extends ServiceA {
 
     const token = tokenRef.value
 
-    // #todo> see useInterval from vue-use
-    let intervalId: ReturnType<typeof setInterval>
-    const makeTimer = () => {
-      clearInterval(intervalId)
-      const secondsRemaining = Math.round(token.period - ((Date.now() / 1000) % token.period))
-      this.reactive.timers[token.period] = secondsRemaining
+    const makeTimer = async () => {
+      const code = await this.generateCodeFor(token)
+      this.reactive.codes[token.id] = code
 
-      intervalId = setInterval(() => {
-        this.reactive.timers[token.period]--
-      }, 1000)
+      const timeRemeaining = this.getRemainingTime(token)
 
-      // timers can drift, so have to resetup them every cycle
-      setTimeout(makeTimer, secondsRemaining * 1000)
+      // isEdge check forces this function to reactivate many times when it is close to finishing
+      // welp, I've tried to make things right
+      setTimeout(makeTimer, isEdge ? timeRemeaining - 100 : timeRemeaining)
     }
 
-    if (!this.reactive.timers[token.period]) {
+    if (persist(this, this.setupToken, token.period, token.period) === undefined) {
+      console.log('make timer for')
+      console.log(token.period)
+      
       makeTimer()
     }
   }
 
+  getRemainingTime(token: TokenI) {
+    // 30 * (1 - ((Date.now() / 1000 / 30) % 1))
+    return token.period * 1000 - (Date.now() % (token.period * 1000))
+    // return token.period * (1 - ((Date.now() / 1000 / token.period) % 1)) * 1000
+    // const time = token.period * (1 - ((Date.now() / 1000 / token.period) % 1)) * 1000
+    // console.log(time)
+    // return time
+  }
+
   reactive = v.reactive({
     tokens: [] as TokenI[],
-    /** token's period to remaining cycle time. ticks every second. Won't wait on 0, but will trigger it */
-    timers: {} as Record<number, number>,
+    codes: {} as Record<TokenI['id'], string>,
   })
 
   supportedAlgorithms = ['SHA1', 'SHA256', 'SHA512'] as const satisfies readonly TokenAlgorithmT[]
@@ -86,8 +93,9 @@ export class Otp extends ServiceA {
     )
   }
 
-  async generateTokenFor(token: TokenI) {
+  async generateCodeFor(token: TokenI) {
     await 1
+
     const encryptedSecret = await this.persistentStorageService.getItem(`secret-${token.id}`)
     assert(encryptedSecret, `Secret not found for token <${token.id}>`)
 

@@ -1,3 +1,4 @@
+import type { MaybeComputedRef, Pausable, UseIntervalOptions } from '@vueuse/core'
 import { KeyValStorageDataI } from './_types'
 import { useDisplay } from 'vuetify'
 
@@ -14,6 +15,16 @@ declare module 'vue' {
   interface ComponentCustomProps {
     'aria-autocomplete'?: string // vuetify ?bug
   }
+}
+
+// i did not create issue (stalebot will close it anyway)
+declare module '@vueuse/core' {
+  declare function useInterval(
+    interval: MaybeComputedRef<number>,
+    options: UseIntervalOptions<true>
+  ): {
+    counter: Ref<number>
+  } & Pausable & { reset: () => void }
 }
 
 declare global {
@@ -50,6 +61,7 @@ declare global {
 
   var assert: AssertT
   var __webpack_module__: typeof module
+  var isEdge: boolean
 }
 
 declare module '*.css' {

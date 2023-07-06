@@ -18,6 +18,12 @@ assert(globalThis, 'globalThis is not avaliable')
 assert(globalThis.indexedDB, 'indexedDB is not avaliable')
 assert(globalThis.crypto.subtle, 'crypto.subtle is not avaliable')
 
+// @ts-ignore
+window.isEdge = navigator.userAgentData?.brands.some((it) => it.brand === 'Microsoft Edge')
+if (isEdge) {
+  console.log(`Edge browser`)
+}
+
 const app = v.createApp(App)
 const vuetify = createVuetify({
   theme: {

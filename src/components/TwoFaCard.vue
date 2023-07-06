@@ -37,9 +37,11 @@
             <span>{{ token.description || '&shy;' }}</span>
           </v-card-subtitle>
           <v-card-text>
-            <span :class="$style.code" class="text-h2 my-auto text-h3">
-              {{ displayCode || '&shy;' }}
-            </span>
+            <Transition name="fade">
+              <span :class="$style.code" class="text-h2 my-auto text-h3">
+                {{ displayCode || '&shy;' }}
+              </span>
+            </Transition>
           </v-card-text>
         </template>
       </div>
@@ -52,15 +54,26 @@
           </v-icon> -->
       </v-avatar>
     </div>
-    <v-progress-linear
+    <div
+      ref="progressBar"
+      :style="{
+        transform: `scaleX(${transitionState})`,
+        transitionDuration: `${transitionDuration}ms`,
+        transformOrigin: transitionDirection ? 'left' : 'right',
+      }"
+      class="bg-deep-purple-darken-3"
       :class="$style.progressbar"
+    ></div>
+    <!-- <v-progress-linear
+      :class="$style.progressbar"
+      :style="{ 'transition-duration': `${transitionSpeed}s` }"
       :max="token.period"
       :reverse="!!transitionDirection"
       :active="true"
       :model-value="transitionState"
       color="deep-purple"
       height="3"
-    ></v-progress-linear>
+    ></v-progress-linear> -->
   </v-card>
 </template>
 
@@ -73,7 +86,10 @@ import {
   onClickOutside,
   useTransition,
   useCurrentElement,
+  whenever,
+  useAnimate,
   type MaybeElement,
+  useDocumentVisibility,
 } from '@vueuse/core'
 import { ProvideValue, seededRandom } from '../util'
 import type { TokenI } from '@/_types'
@@ -91,76 +107,105 @@ export default v.defineComponent({
   setup(props, { expose }) {
     const otpService = v.inject(Otp.token) as Otp
     assert(otpService)
-
     const token = props.token
 
-    const timeRemaining = v.computed(() => otpService.reactive.timers[token.period] || 0)
+    const displayCode = v.toRef(() => otpService.reactive.codes[token.id])
 
-    const transitionDirection = v.ref(0)
-    const nextValue = v.computed(() => timeRemaining.value - 1)
-    const transitionState = v.computed(() =>
-      transitionDirection.value ? nextValue.value : token.period - nextValue.value
-    )
-
-    const displayCode = v.ref('')
-
-    v.watch(timeRemaining, () => {
-      if (timeRemaining.value === token.period) {
-        transitionDirection.value = Number(!transitionDirection.value)
-      }
-    })
-
-    async function onInit() {
-      const code = await otpService.generateTokenFor(token)
-      displayCode.value =
-        code.length % 2 === 0 ? code.slice(0, code.length) + ' ' + code.slice(code.length) : code
-    }
-
-    v.onMounted(onInit)
-
-    onInit()
-
-    v.watch(
-      timeRemaining,
-      async (arg) => {
-        if (timeRemaining.value !== token.period) {
-          return
-        }
-        onInit()
-      },
-      { immediate: true }
-    )
-
-    const rootRef = v.ref(useCurrentElement())
-    const isEdit = v.ref(false)
-
-    {
-      let cancel: (() => void) | undefined
-      v.watch(isEdit, () => {
-        if (isEdit.value === true) {
-          cancel = onClickOutside(rootRef as any, () => {
-            isEdit.value = false
-          })
-        } else {
-          cancel?.()
-        }
-      })
-    }
-
+    const isEdit = useEdit(v.ref(useCurrentElement()))
     const color = getColorForString(props.token.label)
+
+    const progressBarEl = v.ref() as v.Ref<MaybeElement>
+
+    const { transitionDuration, transitionState, transitionDirection } = useTransitionValue(token)
 
     return {
       transitionDirection,
+      transitionDuration,
       transitionState,
-      testt: 'Hello world',
+      progressBar: progressBarEl,
       isEdit,
-      rootRef,
       color,
       displayCode,
-      timeRemaining,
     }
   },
 })
+
+function useTransitionValue(token: TokenI) {
+  const otpService = v.inject(Otp.token)
+  assert(otpService)
+
+  const transitionDuration = v.ref(0)
+  const transitionDirection = v.ref(0 as 0 | 1)
+  const transitionState = v.ref(0)
+
+  const visibility = useDocumentVisibility()
+  whenever(
+    () => visibility.value === 'visible',
+    () => {
+      const time = otpService.getRemainingTime(token)
+      // transitionDirection.value = 0
+      transitionDuration.value = 0
+      transitionState.value = transitionDirection.value
+        ? (token.period - time / 1000) / token.period
+        : time / 1000 / token.period
+
+      // transitionDirection.value = 0
+
+      requestAnimationFrame(() => {
+        // const time = otpService.getRemainingTime(token)
+
+        // console.log(transitionState.value)
+        // console.log(time)
+        transitionDuration.value = time
+        transitionState.value = transitionDirection.value ? 1 : 0
+      })
+    },
+    { immediate: true }
+  )
+
+  // requestAnimationFrame(() => {
+  //   transitionState.value = 0
+  // })
+
+  v.watch(
+    v.toRef(() => otpService.reactive.codes[token.id]),
+    (current, previous) => {
+      if (!previous) {
+        return
+      }
+
+      transitionDuration.value = 0
+      transitionState.value = transitionDirection.value ? 1 : 0
+      transitionDirection.value = Number(!transitionDirection.value)
+
+      requestAnimationFrame(() => {
+        const time = otpService.getRemainingTime(token)
+        // console.log('timeRemaining2')
+        // console.log(time)
+
+        transitionDuration.value = time
+        transitionState.value = transitionDirection.value ? 1 : 0
+      })
+    }
+  )
+
+  return { transitionState, transitionDuration, transitionDirection }
+}
+
+function useEdit(rootRef: v.Ref<Element>) {
+  const isEdit = v.ref(false)
+
+  let cancel: (() => void) | undefined
+  v.watch(isEdit, () => {
+    if (isEdit.value === true) {
+      cancel = onClickOutside(rootRef as any, () => {
+        isEdit.value = false
+      })
+    } else {
+      cancel?.()
+    }
+  })
+}
 
 function getColorForString(str: string) {
   // gpt3 said these colors are nice
@@ -177,10 +222,9 @@ function getColorForString(str: string) {
     '#FFC1C1',
   ]
 
-  const stringSum = ([].map.call(str, (it: string) => it.charCodeAt(0)) as number[]).reduce(
-    (a, b) => a + b,
-    0
-  )
+  const stringSum = (
+    [].map.call(str, (it: string, i) => it.charCodeAt(0) * (i + 1)) as number[]
+  ).reduce((a, b) => a + b, 0)
 
   const indexNum = ~~(seededRandom(stringSum) * 10)
 
@@ -194,14 +238,29 @@ function getColorForString(str: string) {
 }
 
 :deep(.v-progress-linear:not(\0)) {
-  transition: 1s;
   transition-timing-function: linear;
 }
 </style>
 
 <style module>
+@keyframes progress {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
 .progressbar {
+  /* animation: 3s 0 alternate linear progress; */
+  transition-timing-function: linear;
   margin-top: -3px;
+  height: 3px;
+  width: 100%;
+  /* z-index: -1000; */
+  /* contain: strict; */
 }
 
 .cool-background {

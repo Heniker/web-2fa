@@ -9,8 +9,7 @@
   "dependencies": {
     "@types/lodash": "^4.14.186",
     "@vue/reactivity": "^3.3.4",
-    "@vueuse/components": "^9.9.0",
-    "@vueuse/core": "^9.3.0",
+    "@vueuse/core": "^10.2.1",
     "assert": "^2.0.0",
     "idb-keyval": "^6.2.1",
     "lodash": "^4.17.21",

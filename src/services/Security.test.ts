@@ -1,3 +1,4 @@
+// @ts-ignore
 import * as services from './index'
 import * as v from 'vue'
 import { Security } from './Security'

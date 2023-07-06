@@ -30,7 +30,7 @@ qr code support
 toggle show password should remember cursor position
 show global timer if all tokens are of same period
 
-edge fucks up timers even when page is visible. user has to make clicks on page for it not to throttle
+edge fcs up timers even when page is visible. user has to make clicks on page for it not to throttle
 this makes animation timings wrong. Also token's code generation can be delayed by up to 1 second
 check this
 ```
@@ -43,7 +43,7 @@ function test() {
 }
 test()
 ```
-one solution is to lower setTimeout timings on edge & force it run code much more times
-which is bad, but I guess microsoft thinks it's users have to suffer
+the solution currently implemented to remedy this is terrible
+I guess microsoft prefers when its users have to suffer
 
 -->
