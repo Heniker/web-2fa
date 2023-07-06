@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunk=self.webpackChunk||[]).push([[711],{711:(e,n,t)=>{t.r(n),t.d(n,{default:()=>r});var u=t(6252);const o=u.aZ({}),r=(0,t(3744).Z)(o,[["render",function(e,n,t,o,r,s){return(0,u.wg)(),(0,u.iD)("div",null,"this url should copy code to clipboard and close but rn it does nothing")}]])}}]);
+//# sourceMappingURL=711.d312d344388ff38cdf71.bundle.js.map
