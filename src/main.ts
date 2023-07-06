@@ -1,9 +1,15 @@
-assert ??
-  (window.assert = (c) => {
-    if (!c) {
-      throw new Error()
-    }
-  }) // production only
+;(() => {
+  var assert
+  // only if assert not defined by webpack
+  assert ??
+    (window.assert = (c) => {
+      if (!c) {
+        throw new Error()
+      }
+    })
+})()
+
+console.log(assert)
 
 import 'vuetify/lib/styles/main.css'
 import * as v from 'vue'
@@ -21,9 +27,9 @@ import { appToken } from './services/util'
   // is obviously the best way
 }
 
-assert(globalThis, 'globalThis is not avaliable')
-assert(globalThis.indexedDB, 'indexedDB is not avaliable')
-assert(globalThis.crypto.subtle, 'crypto.subtle is not avaliable')
+// assert(globalThis, 'globalThis is not avaliable')
+// assert(globalThis.indexedDB, 'indexedDB is not avaliable')
+// assert(globalThis.crypto.subtle, 'crypto.subtle is not avaliable')
 
 // @ts-ignore
 window.isEdge = navigator.userAgentData?.brands.some((it) => it.brand === 'Microsoft Edge')
