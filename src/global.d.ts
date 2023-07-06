@@ -62,6 +62,7 @@ declare global {
   var assert: AssertT
   var __webpack_module__: typeof module
   var isEdge: boolean
+  var publicPath: string
 }
 
 declare module '*.css' {

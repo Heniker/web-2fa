@@ -65,7 +65,7 @@ const vuetify = createVuetify({
   })
 }
 
-const router = Router.createRouter({ routes, history: Router.createWebHistory() })
+const router = Router.createRouter({ routes, history: Router.createWebHistory(publicPath) })
 
 app.use(router)
 app.use(vuetify)

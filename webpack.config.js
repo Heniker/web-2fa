@@ -16,9 +16,11 @@ import webpack from 'webpack'
  * @param {{entry: string[], mode: string, env: EnvT}} argv
  */
 export default async (_, argv) => {
+  const htmlTemplate = './public/index.html'
+  const publicPath = '/web-2fa/'
+
   const isDev = argv.mode === 'development'
   const isServe = !!argv.env.WEBPACK_SERVE
-  const htmlTemplate = './public/index.html'
 
   /**
    * @type {import('webpack').Configuration & {devServer: any}}
@@ -129,6 +131,8 @@ export default async (_, argv) => {
         'process.env.NODE_DEBUG': JSON.stringify(false),
         'process.version': JSON.stringify(process.version),
         'process.stderr': JSON.stringify(false), // https://github.com/browserify/commonjs-assert/issues/55
+
+        publicPath: JSON.stringify(publicPath), // https://github.com/browserify/commonjs-assert/issues/55
       }),
       new VueLoaderPlugin(),
       new VuetifyPlugin({}),
@@ -139,7 +143,7 @@ export default async (_, argv) => {
     output: {
       clean: true,
       filename: 'js/[name].[contenthash].js',
-      publicPath: '/',
+      publicPath,
       chunkFilename: 'js/[id].[contenthash].bundle.js',
     },
     node: {
