@@ -2,7 +2,6 @@ import { ServiceA } from './_Service'
 import { useStorage } from '@vueuse/core'
 import { get as dbGet, set as dbSet } from 'idb-keyval'
 import * as v from 'vue'
-import * as _ from 'lodash'
 import type { KeyValStorageDataI } from '@/_types'
 
 /**

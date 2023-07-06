@@ -6,7 +6,6 @@ import { ServiceA } from './_Service'
 import { appInject } from './util'
 import { Security } from './Security'
 import type { TokenAlgorithmT, TokenI } from '@/_types'
-import * as _ from 'lodash'
 import { nanoid } from 'nanoid'
 import { useAsyncState, useInterval, watchArray } from '@vueuse/core'
 

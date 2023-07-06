@@ -205,6 +205,8 @@ function useEdit(rootRef: v.Ref<Element>) {
       cancel?.()
     }
   })
+
+  return isEdit
 }
 
 function getColorForString(str: string) {

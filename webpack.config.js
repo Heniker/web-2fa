@@ -1,5 +1,6 @@
 import { VuetifyPlugin } from 'webpack-plugin-vuetify'
 import { VueLoaderPlugin } from 'vue-loader'
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 import webpack from 'webpack'
@@ -104,27 +105,30 @@ export default async (_, argv) => {
     },
     plugins: [
       ...(isDev
-        ? []
+        ? [
+            new webpack.ProvidePlugin({
+              assert: 'assert',
+            }),
+          ]
         : [
             new webpack.IgnorePlugin({
               resourceRegExp: /\.test|spec\./,
             }),
+            new BundleAnalyzerPlugin(),
             new MiniCssExtractPlugin(),
           ]),
       new webpack.DefinePlugin({
         // https://github.com/vuejs/core/tree/main/packages/vue#bundler-build-feature-flags
         // https://github.com/vuejs/core/blob/main/packages/global.d.ts
-        __DEV__: false,
-        __FEATURE_SUSPENSE__: false,
-        __VUE_OPTIONS_API__: false,
-        __VUE_PROD_DEVTOOLS__: false,
+        __DEV__: JSON.stringify(false),
+        __FEATURE_SUSPENSE__: JSON.stringify(false),
+        __VUE_OPTIONS_API__: JSON.stringify(false),
+        __VUE_PROD_DEVTOOLS__: JSON.stringify(false),
 
-        'process.env.NODE_DEBUG': JSON.stringify(process.env.NODE_DEBUG),
+        'process.env.NODE_ENV': JSON.stringify(isDev ? 'development' : 'production'),
+        'process.env.NODE_DEBUG': JSON.stringify(false),
         'process.version': JSON.stringify(process.version),
         'process.stderr': JSON.stringify(false), // https://github.com/browserify/commonjs-assert/issues/55
-      }),
-      new webpack.ProvidePlugin({
-        assert: 'assert',
       }),
       new VueLoaderPlugin(),
       new VuetifyPlugin({}),

@@ -1,3 +1,10 @@
+assert ??
+  (window.assert = (c) => {
+    if (!c) {
+      throw new Error()
+    }
+  }) // production only
+
 import 'vuetify/lib/styles/main.css'
 import * as v from 'vue'
 import * as Router from 'vue-router'
