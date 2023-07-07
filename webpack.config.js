@@ -17,7 +17,7 @@ import webpack from 'webpack'
  */
 export default async (_, argv) => {
   const htmlTemplate = './public/index.html'
-  const publicPath = '/web-2fa/'
+  const publicPath = '/'
 
   const isDev = argv.mode === 'development'
   const isServe = !!argv.env.WEBPACK_SERVE

@@ -131,7 +131,7 @@ export default v.defineComponent({
 })
 
 function useTransitionValue(token: TokenI) {
-  const otpService = v.inject(Otp.token)
+  const otpService = v.inject(Otp.token) as Otp
   assert(otpService)
 
   const transitionDuration = v.ref(0)
@@ -142,30 +142,28 @@ function useTransitionValue(token: TokenI) {
   whenever(
     () => visibility.value === 'visible',
     () => {
-      const time = otpService.getRemainingTime(token)
-      // transitionDirection.value = 0
-      transitionDuration.value = 0
-      transitionState.value = transitionDirection.value
-        ? (token.period - time / 1000) / token.period
-        : time / 1000 / token.period
+      requestAnimationFrame(firstFrame)
 
-      // transitionDirection.value = 0
+      function firstFrame() {
+        const time = otpService.getRemainingTime(token)
 
-      requestAnimationFrame(() => {
-        // const time = otpService.getRemainingTime(token)
+        transitionDuration.value = 0
+        transitionState.value = transitionDirection.value
+          ? (token.period - time / 1000) / token.period
+          : time / 1000 / token.period
 
-        // console.log(transitionState.value)
-        // console.log(time)
+        requestAnimationFrame(nextFrame)
+      }
+
+      function nextFrame() {
+        const time = otpService.getRemainingTime(token)
+
         transitionDuration.value = time
         transitionState.value = transitionDirection.value ? 1 : 0
-      })
+      }
     },
     { immediate: true }
   )
-
-  // requestAnimationFrame(() => {
-  //   transitionState.value = 0
-  // })
 
   v.watch(
     v.toRef(() => otpService.reactive.codes[token.id]),
@@ -173,19 +171,21 @@ function useTransitionValue(token: TokenI) {
       if (!previous) {
         return
       }
+      requestAnimationFrame(firstFrame)
 
-      transitionDuration.value = 0
-      transitionState.value = transitionDirection.value ? 1 : 0
-      transitionDirection.value = Number(!transitionDirection.value)
+      function firstFrame() {
+        transitionDuration.value = 0
+        transitionState.value = transitionDirection.value ? 1 : 0
+        transitionDirection.value = Number(!transitionDirection.value)
+        requestAnimationFrame(nextFrame)
+      }
 
-      requestAnimationFrame(() => {
+      function nextFrame() {
         const time = otpService.getRemainingTime(token)
-        // console.log('timeRemaining2')
-        // console.log(time)
 
         transitionDuration.value = time
         transitionState.value = transitionDirection.value ? 1 : 0
-      })
+      }
     }
   )
 

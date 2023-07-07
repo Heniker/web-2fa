@@ -13,6 +13,7 @@
     "nanoid": "^4.0.2",
     "otpauth": "^9.1.3",
     "vue": "^3.3.4",
+    "vue-draggable-plus": "^0.2.1",
     "vue-pages-builder": "github:Heniker/vue-pages-builder",
     "vue-router": "^4.2.4",
     "vuetify": "^3.3.7"

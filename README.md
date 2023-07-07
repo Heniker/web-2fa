@@ -19,7 +19,6 @@ Security related functionality can be found in `src/services/Security.ts`
 <!--
 
 todo:
-make animationsAPI optional
 setup password ttl
 steam account support
 search functionality
@@ -29,6 +28,8 @@ icons for accounts
 qr code support
 toggle show password should remember cursor position
 show global timer if all tokens are of same period
+simple editing on mobile
+DnD
 
 edge fcs up timers even when page is visible. user has to make clicks on page for it not to throttle
 this makes animation timings wrong. Also token's code generation can be delayed by up to 1 second

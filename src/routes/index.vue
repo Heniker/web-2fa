@@ -20,7 +20,7 @@
     </v-app-bar>
   </Teleport>
   <v-container fluid>
-    <v-row>
+    <v-row ref="dndEl">
       <v-col cols="12" md="6" lg="4" xl="3" v-for="token in tokens">
         <TwoFaCard :token="token"></TwoFaCard>
       </v-col>
@@ -34,11 +34,12 @@ import * as v from 'vue'
 import * as otp from 'otpauth'
 import { useDisplay } from 'vuetify'
 import * as vuetifyComponents from 'vuetify/components'
-import { onClickOutside } from '@vueuse/core'
+import { onClickOutside, watchOnce } from '@vueuse/core'
 import TwoFaCard from '@/components/TwoFaCard.vue'
 import { Otp, Security } from '@/services'
 import { isResolved } from '@/util'
 import { useRouter, onBeforeRouteUpdate } from 'vue-router'
+import { useDraggable } from 'vue-draggable-plus'
 
 const addBtnComponent = v.h(vuetifyComponents.VBtn, {})
 
@@ -71,10 +72,18 @@ export default v.defineComponent({
     }
 
     const isAdding = v.ref(true)
-    const tokens = v.computed(() => otpService.reactive.tokens)
+    const tokens = v.toRefs(otpService.reactive).tokens
     const isContextSetUp = v.computed(() => securityService.reactive.isContextSetUp)
+    const dndEl = v.ref() as v.Ref<Element>
+
+    watchOnce(dndEl, () => {
+      useDraggable(dndEl.value, tokens, { animation: 150 })
+      console.log('tokens')
+      console.log(tokens)
+    })
 
     return {
+      dndEl,
       tokens,
       isContextSetUp,
       testt: 'Hello world',

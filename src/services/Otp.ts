@@ -50,14 +50,12 @@ export class Otp extends ServiceA {
       setTimeout(makeTimer, isEdge ? timeRemeaining - 100 : timeRemeaining)
     }
 
-    if (persist(this, this.setupToken, token.period, token.period) === undefined) {
-      console.log('make timer for')
-      console.log(token.period)
-      
-      makeTimer()
-    }
+    makeTimer()
   }
 
+  /**
+   * #todo> cache
+   */
   getRemainingTime(token: TokenI) {
     // 30 * (1 - ((Date.now() / 1000 / 30) % 1))
     return token.period * 1000 - (Date.now() % (token.period * 1000))
