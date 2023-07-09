@@ -35,12 +35,12 @@ edge fcs up timers even when page is visible. user has to make clicks on page fo
 this makes animation timings wrong. Also token's code generation can be delayed by up to 1 second
 check this
 ```
-var timeTaken = 0
+var lastRunTime = 0
 var expectedTime = 5000
 function test() {
-  timeTaken && console.log(Date.now() - timeTaken - expectedTime)
+  lastRunTime && console.log(Date.now() - lastRunTime - expectedTime)
+  lastRunTime = Date.now()
   setTimeout(test, expectedTime)
-  timeTaken = Date.now()
 }
 test()
 ```

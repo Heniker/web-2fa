@@ -1,11 +1,11 @@
 import * as v from 'vue'
 import { managedPromise } from '@/util'
-import { ServiceA } from './_Service'
-import { appInject } from './util'
+import { appInject, delayAsyncFunctions } from './util'
 import { PersistentStorage } from './PersistentStorage'
 import { until } from '@vueuse/core'
 
-export class Security extends ServiceA {
+@delayAsyncFunctions()
+export class Security {
   static token = Symbol() as v.InjectionKey<Security>
 
   @appInject(PersistentStorage.token)
@@ -42,16 +42,10 @@ export class Security extends ServiceA {
       .then((arg) => new TextDecoder().decode(arg))
   }
 
-  constructor() {
-    super()
-  }
-
   /**
    * Password should not be accessible from outside - that's why this function exists
    */
   async setupSecureContext(plainTextPass: string) {
-    await 1
-
     if (this.encryptionKey) {
       return
     }

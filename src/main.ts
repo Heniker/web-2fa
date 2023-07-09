@@ -76,7 +76,8 @@ app.use(vuetify)
 // app.use(PortalVue)
 
 app.runWithContext(() => {
-  // `useDisplay().mobile` won't be reactive in template for some reason - you have to add `.value`
+  // `useDisplay()` is wrapped in `reactive` because
+  // `useDisplay()[someKey]` won't be reactive in template for some reason - you have to add `.value`
   // Probably vuetify bug, but I found no issues on github
   app.config.globalProperties.display = v.reactive(useDisplay()) as any
 })

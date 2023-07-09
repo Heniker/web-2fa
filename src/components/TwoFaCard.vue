@@ -55,7 +55,6 @@
       </v-avatar>
     </div>
     <div
-      ref="progressBar"
       :style="{
         transform: `scaleX(${transitionState})`,
         transitionDuration: `${transitionDuration}ms`,
@@ -64,16 +63,6 @@
       class="bg-deep-purple-darken-3"
       :class="$style.progressbar"
     ></div>
-    <!-- <v-progress-linear
-      :class="$style.progressbar"
-      :style="{ 'transition-duration': `${transitionSpeed}s` }"
-      :max="token.period"
-      :reverse="!!transitionDirection"
-      :active="true"
-      :model-value="transitionState"
-      color="deep-purple"
-      height="3"
-    ></v-progress-linear> -->
   </v-card>
 </template>
 
@@ -91,14 +80,12 @@ import {
   type MaybeElement,
   useDocumentVisibility,
 } from '@vueuse/core'
-import { ProvideValue, seededRandom } from '../util'
+import { seededRandom } from '../util'
 import type { TokenI } from '@/_types'
 import { Otp } from '@/services'
 
 export default v.defineComponent({
-  components: {
-    ProvideValue,
-  },
+  components: {},
 
   props: {
     token: { required: true, type: Object as v.PropType<TokenI> },
@@ -114,15 +101,13 @@ export default v.defineComponent({
     const isEdit = useEdit(v.ref(useCurrentElement()))
     const color = getColorForString(props.token.label)
 
-    const progressBarEl = v.ref() as v.Ref<MaybeElement>
-
+    // custom transition is used instead of animations API because it seems to be MUCH more cpu-efficient
     const { transitionDuration, transitionState, transitionDirection } = useTransitionValue(token)
 
     return {
       transitionDirection,
       transitionDuration,
       transitionState,
-      progressBar: progressBarEl,
       isEdit,
       color,
       displayCode,
@@ -142,22 +127,21 @@ function useTransitionValue(token: TokenI) {
   whenever(
     () => visibility.value === 'visible',
     () => {
-      requestAnimationFrame(firstFrame)
+      requestAnimationFrame(() => {
+        firstFrame()
+        requestAnimationFrame(nextFrame)
+      })
+
+      const time = otpService.getRemainingTime(token)
 
       function firstFrame() {
-        const time = otpService.getRemainingTime(token)
-
         transitionDuration.value = 0
         transitionState.value = transitionDirection.value
           ? (token.period - time / 1000) / token.period
           : time / 1000 / token.period
-
-        requestAnimationFrame(nextFrame)
       }
 
       function nextFrame() {
-        const time = otpService.getRemainingTime(token)
-
         transitionDuration.value = time
         transitionState.value = transitionDirection.value ? 1 : 0
       }
@@ -171,13 +155,16 @@ function useTransitionValue(token: TokenI) {
       if (!previous) {
         return
       }
-      requestAnimationFrame(firstFrame)
+
+      requestAnimationFrame(() => {
+        firstFrame()
+        requestAnimationFrame(nextFrame)
+      })
 
       function firstFrame() {
         transitionDuration.value = 0
         transitionState.value = transitionDirection.value ? 1 : 0
         transitionDirection.value = Number(!transitionDirection.value)
-        requestAnimationFrame(nextFrame)
       }
 
       function nextFrame() {
@@ -195,16 +182,15 @@ function useTransitionValue(token: TokenI) {
 function useEdit(rootRef: v.Ref<Element>) {
   const isEdit = v.ref(false)
 
-  let cancel: (() => void) | undefined
-  v.watch(isEdit, () => {
-    if (isEdit.value === true) {
-      cancel = onClickOutside(rootRef as any, () => {
+  whenever(
+    () => isEdit.value === true,
+    () => {
+      const cancel = onClickOutside(rootRef as any, () => {
         isEdit.value = false
+        cancel?.()
       })
-    } else {
-      cancel?.()
     }
-  })
+  )
 
   return isEdit
 }
@@ -238,47 +224,23 @@ function getColorForString(str: string) {
 :deep(.v-label.v-field-label.v-field-label--floating) {
   top: 3px;
 }
-
-:deep(.v-progress-linear:not(\0)) {
-  transition-timing-function: linear;
-}
 </style>
 
 <style module>
-@keyframes progress {
-  from {
-    transform: scaleX(0);
-  }
-
-  to {
-    transform: scaleX(1);
-  }
-}
-
 .progressbar {
-  /* animation: 3s 0 alternate linear progress; */
   transition-timing-function: linear;
   margin-top: -3px;
   height: 3px;
   width: 100%;
-  /* z-index: -1000; */
-  /* contain: strict; */
 }
 
 .cool-background {
   background-color: #292929;
   border-color: #3b3b3b;
-
   /* background-color: #5A7172; */
 }
 
 .cool-background:hover {
   background-color: #363636;
-}
-
-.code {
-  /* padding: 5px; */
-  /* border: 1px solid white; */
-  /* border-color: rgb(var(--v-theme-surface)); */
 }
 </style>

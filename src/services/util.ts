@@ -48,3 +48,57 @@ export const appInject = <T>(token: v.InjectionKey<T>) => {
     }
   }
 }
+
+/**
+ * So, this decorator makes all async functions in a class begin on queueMicrotask, rather than sync \
+ * Normally when async function is called it begins its execution synchronously
+ * and returns its value on queueMicrotask (unless there are any truly async operations within function)
+ *
+ * This decorator is not required, but without it manually adding `await 1` to any function that uses injected service is mandatory
+ *
+ * The decorator imlementation is rather terrible (methods are replaced on instance, not on prototype),
+ * but it does not really matter that much for services
+ */
+export const delayAsyncFunctions = () => {
+  return <This extends new (...args: any) => any>(
+    target: This,
+    context: ClassDecoratorContext<This>
+  ) => {
+    const fnKeysToReplace = Object.entries(
+      Object.getOwnPropertyDescriptors(target.prototype)
+    ).flatMap(([key, descriptor]) => {
+      if (
+        descriptor.get ||
+        descriptor.set ||
+        typeof descriptor.value !== 'function' ||
+        descriptor.value.constructor.name !== 'AsyncFunction'
+      ) {
+        return []
+      }
+
+      return [key]
+    })
+
+    return class extends target {
+      constructor(...arg: any[]) {
+        super(...arg)
+
+        fnKeysToReplace.forEach((it) => {
+          const savedVal = this[it]
+
+          const replaceFn = async (...args: any[]) => {
+            await 1 /* can be any value */
+            return savedVal.call(this, ...args)
+          }
+
+          Object.defineProperty(this, it, {
+            value: replaceFn,
+            configurable: true,
+            writable: true,
+            enumerable: false,
+          })
+        })
+      }
+    }
+  }
+}
