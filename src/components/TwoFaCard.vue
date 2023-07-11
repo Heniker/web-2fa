@@ -1,5 +1,6 @@
 <template>
   <v-card
+    ref="rootRef"
     :class="$style['cool-background']"
     height="170"
     color="#DCEFEF"
@@ -18,7 +19,7 @@
               hide-details
             ></v-text-field>
           </v-card-title>
-          <v-card-subtitle class="mt-auto mb-3">
+          <v-card-subtitle class="mt-1">
             <v-text-field
               v-model="token.description"
               label="Description"
@@ -46,24 +47,29 @@
         </template>
       </div>
 
-      <!-- <v-avatar color="#89CFF0" size="90" class="ma-auto mr-3 flex-shrink-0"> -->
-      <v-avatar :color="color" size="90" class="my-auto mr-3 flex-shrink-0">
+      <div v-if="isEdit" class="d-flex flex-column align-center justify-space-around ma-3">
+        <!-- I am not sure if this is visually obvious enough to be a drag target -->
+        <v-avatar size="60" class="cursor-grab hack_selector-drag">
+          <v-icon size="60">mdi-drag-variant</v-icon>
+        </v-avatar>
+
+        <v-btn color="red" variant="tonal" @click="remove">remove</v-btn>
+      </div>
+
+      <v-avatar v-else :color="color" size="90" class="my-auto mr-3 flex-shrink-0">
         <span class="text-h4 text-black">{{ token.label.charAt(0).toUpperCase() }}</span>
-        <!-- <v-icon large color="blue darken-2">
-            S
-          </v-icon> -->
       </v-avatar>
     </div>
-    <div
-      :style="{
-        transform: `scaleX(${transitionState})`,
-        transitionDuration: `${transitionDuration}ms`,
-        transformOrigin: transitionDirection ? 'left' : 'right',
-      }"
-      class="bg-deep-purple-darken-3"
-      :class="$style.progressbar"
-    ></div>
   </v-card>
+  <div
+    :style="{
+      transform: `scaleX(${transitionState})`,
+      transitionDuration: `${transitionDuration}ms`,
+      transformOrigin: transitionDirection ? 'left' : 'right',
+    }"
+    class="bg-deep-purple-darken-3"
+    :class="$style.progressbar"
+  ></div>
 </template>
 
 <script lang="ts">
@@ -89,25 +95,37 @@ export default v.defineComponent({
 
   props: {
     token: { required: true, type: Object as v.PropType<TokenI> },
+    forceAnimationUpdate: { required: true, type: Boolean },
   },
 
   setup(props, { expose }) {
     const otpService = v.inject(Otp.token) as Otp
     assert(otpService)
-    const token = props.token
 
-    const displayCode = v.toRef(() => otpService.reactive.codes[token.id])
+    const displayCode = v.toRef(() => otpService.reactive.codes[props.token.id])
 
-    const isEdit = useEdit(v.ref(useCurrentElement()))
+    const rootRef = v.ref() as v.Ref<Element | undefined>
+    const isEdit = useEdit(rootRef)
     const color = getColorForString(props.token.label)
 
     // custom transition is used instead of animations API because it seems to be MUCH more cpu-efficient
-    const { transitionDuration, transitionState, transitionDirection } = useTransitionValue(token)
+    const { transitionDuration, transitionState, transitionDirection, forcedUpdate } =
+      useTransitionValue(props.token)
+
+    whenever(
+      () => props.forceAnimationUpdate,
+      () => forcedUpdate(false)
+    )
 
     return {
+      rootRef,
       transitionDirection,
       transitionDuration,
       transitionState,
+      remove: () => {
+        const tokens = otpService.reactive.tokens
+        tokens.splice(tokens.indexOf(props.token), 1)
+      },
       isEdit,
       color,
       displayCode,
@@ -124,29 +142,34 @@ function useTransitionValue(token: TokenI) {
   const transitionState = v.ref(0)
 
   const visibility = useDocumentVisibility()
+
+  const forcedUpdate = (swapDirection = false) => {
+    requestAnimationFrame(() => {
+      firstFrame()
+      requestAnimationFrame(nextFrame)
+    })
+
+    const time = otpService.getRemainingTime(token)
+
+    function firstFrame() {
+      transitionDuration.value = 0
+      swapDirection && (transitionDirection.value = Number(!transitionDirection.value))
+      transitionState.value = transitionDirection.value
+        ? (token.period - time / 1000) / token.period // 0
+        : time / 1000 / token.period // 1
+    }
+
+    function nextFrame() {
+      transitionDuration.value = time
+      transitionState.value = transitionDirection.value ? 1 : 0
+    }
+  }
+
+  forcedUpdate()
+
   whenever(
     () => visibility.value === 'visible',
-    () => {
-      requestAnimationFrame(() => {
-        firstFrame()
-        requestAnimationFrame(nextFrame)
-      })
-
-      const time = otpService.getRemainingTime(token)
-
-      function firstFrame() {
-        transitionDuration.value = 0
-        transitionState.value = transitionDirection.value
-          ? (token.period - time / 1000) / token.period
-          : time / 1000 / token.period
-      }
-
-      function nextFrame() {
-        transitionDuration.value = time
-        transitionState.value = transitionDirection.value ? 1 : 0
-      }
-    },
-    { immediate: true }
+    () => forcedUpdate()
   )
 
   v.watch(
@@ -156,41 +179,26 @@ function useTransitionValue(token: TokenI) {
         return
       }
 
-      requestAnimationFrame(() => {
-        firstFrame()
-        requestAnimationFrame(nextFrame)
-      })
-
-      function firstFrame() {
-        transitionDuration.value = 0
-        transitionState.value = transitionDirection.value ? 1 : 0
-        transitionDirection.value = Number(!transitionDirection.value)
-      }
-
-      function nextFrame() {
-        const time = otpService.getRemainingTime(token)
-
-        transitionDuration.value = time
-        transitionState.value = transitionDirection.value ? 1 : 0
-      }
+      forcedUpdate(true)
     }
   )
 
-  return { transitionState, transitionDuration, transitionDirection }
+  return { transitionState, transitionDuration, transitionDirection, forcedUpdate }
 }
 
-function useEdit(rootRef: v.Ref<Element>) {
+function useEdit(rootRef: v.Ref<Element | undefined>) {
   const isEdit = v.ref(false)
 
-  whenever(
-    () => isEdit.value === true,
-    () => {
-      const cancel = onClickOutside(rootRef as any, () => {
+  whenever(isEdit, () => {
+    const cancel = onClickOutside(
+      rootRef as any,
+      () => {
         isEdit.value = false
         cancel?.()
-      })
-    }
-  )
+      },
+      { capture: true }
+    )
+  })
 
   return isEdit
 }

@@ -4,6 +4,7 @@ import { PersistentStorage } from './PersistentStorage'
 import { appInject, delayAsyncFunctions } from './util'
 import { Security } from './Security'
 import type { TokenAlgorithmT, TokenI } from '@/_types'
+import { useDebounceFn } from '@vueuse/core'
 
 @delayAsyncFunctions()
 export class Otp {
@@ -51,11 +52,29 @@ export class Otp {
 
   /**
    * Remaining cycle time in ms
-   * 
+   *
    * #todo?> cache
    */
   getRemainingTime(token: TokenI) {
     return token.period * 1000 - (Date.now() % (token.period * 1000))
+  }
+
+  constructor() {
+    // this is not a perfect solution, but better than alternatives
+    v.watch(
+      v.toRef(() => this.reactive.tokens),
+      useDebounceFn(async () => {
+        if (!this.reactive.tokens.length) {
+          return
+        }
+
+        this.persistentStorageService.setItem(
+          'secure-tokens',
+          await this.securityService.encrypt(JSON.stringify(this.reactive.tokens))
+        )
+      }, 300),
+      { deep: true }
+    )
   }
 
   reactive = v.reactive({
@@ -74,14 +93,9 @@ export class Otp {
     // the order is important, which is bad
     // #todo?> lets not use array to store tokens
     this.setupToken(token)
-
-    this.persistentStorageService.setItem(
-      'secure-tokens',
-      await this.securityService.encrypt(JSON.stringify(this.reactive.tokens))
-    )
   }
 
-  async generateCodeFor(token: TokenI) {
+  private async generateCodeFor(token: TokenI) {
     const encryptedSecret = await this.persistentStorageService.getItem(`secret-${token.id}`)
     assert(encryptedSecret, `Secret not found for token <${token.id}>`)
 

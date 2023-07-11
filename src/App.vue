@@ -68,14 +68,9 @@ export default v.defineComponent({
   overflow: auto;
 }
 
-/* a {
-  text-decoration: none;
-  color: inherit;
-} */
-
 * {
   box-sizing: border-box;
-  
+
   /* 
   If something breaks you  won't debug it.
   Also, the performace difference is marginal.
@@ -85,13 +80,11 @@ export default v.defineComponent({
   content-visibility: auto; */
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s ease;
+.cursor-pointer {
+  cursor: pointer;
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.cursor-grab {
+  cursor: grab;
 }
 </style>

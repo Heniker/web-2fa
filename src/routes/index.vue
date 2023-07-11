@@ -21,8 +21,8 @@
   </Teleport>
   <v-container fluid>
     <v-row ref="dndEl">
-      <v-col cols="12" md="6" lg="4" xl="3" v-for="token in tokens">
-        <TwoFaCard :token="token"></TwoFaCard>
+      <v-col cols="12" md="6" lg="4" xl="3" v-for="token in tokens" :key="token.id">
+        <TwoFaCard :token="token" :forceAnimationUpdate="forceAnimationUpdate"></TwoFaCard>
       </v-col>
     </v-row>
   </v-container>
@@ -39,9 +39,7 @@ import TwoFaCard from '@/components/TwoFaCard.vue'
 import { Otp, Security } from '@/services'
 import { isResolved } from '@/util'
 import { useRouter, onBeforeRouteUpdate } from 'vue-router'
-import { useDraggable } from 'vue-draggable-plus'
-
-const addBtnComponent = v.h(vuetifyComponents.VBtn, {})
+import { useDraggable, type UseDraggableReturn } from 'vue-draggable-plus'
 
 export default v.defineComponent({
   components: {
@@ -76,17 +74,27 @@ export default v.defineComponent({
     const isContextSetUp = v.computed(() => securityService.reactive.isContextSetUp)
     const dndEl = v.ref() as v.Ref<Element>
 
+    const forceAnimationUpdate = v.ref(false)
+
     watchOnce(dndEl, () => {
-      useDraggable(dndEl.value, tokens, { animation: 150 })
-      console.log('tokens')
-      console.log(tokens)
+      const draggable = useDraggable<UseDraggableReturn>(dndEl, tokens, {
+        emptyInsertThreshold: 0,
+        animation: 150,
+        handle: '.hack_selector-drag',
+        onEnd() {
+          forceAnimationUpdate.value = true
+          queueMicrotask(() => (forceAnimationUpdate.value = false))
+        },
+      })
+      console.log('draggable')
+      console.log(draggable)
     })
 
     return {
+      forceAnimationUpdate,
       dndEl,
       tokens,
       isContextSetUp,
-      testt: 'Hello world',
       isAdding,
       addToken,
     }
@@ -99,8 +107,8 @@ export default v.defineComponent({
   /* box-shadow: 0px 0px 4px 0px rgb(var(--v-theme-background)); */
 }
 
-.test2 {
-  height: 70px;
+.sortable-chosen {
+  /* visibility: hidden !important; */
 }
 
 :deep(.v-field) * {
