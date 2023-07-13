@@ -5,12 +5,14 @@
     height="170"
     color="#DCEFEF"
     variant="outlined"
-    @click.right="(event) => isEdit || ((isEdit = true), event.preventDefault())"
+    v-long-press="() => isEdit || (isEdit = true)"
+    @click.right.prevent="() => isEdit || (isEdit = true)"
+    @contextmenu.prevent
   >
     <div class="pa-2 d-flex justify-space-between h-100">
-      <div class="flex-grow-1 mr-5">
+      <div class="flex-grow-1">
         <template v-if="isEdit">
-          <v-card-title class="mt-2 text-h1">
+          <v-card-title class="text-h1 mt-2">
             <v-text-field
               v-model="token.label"
               label="Name"
@@ -38,18 +40,18 @@
             <span>{{ token.description || '&shy;' }}</span>
           </v-card-subtitle>
           <v-card-text>
-            <Transition name="fade">
-              <span :class="$style.code" class="text-h2 my-auto text-h3">
-                {{ displayCode || '&shy;' }}
+            <Transition :name="isMotionReduce ? undefined : 'fade'" mode="out-in">
+              <span v-if="displayCode" class="text-h2 my-auto text-h3">
+                {{ displayCode }}
               </span>
             </Transition>
           </v-card-text>
         </template>
       </div>
 
-      <div v-if="isEdit" class="d-flex flex-column align-center justify-space-around ma-3">
+      <div v-if="isEdit" class="d-flex flex-column align-center justify-space-around ma-3 ml-0">
         <!-- I am not sure if this is visually obvious enough to be a drag target -->
-        <v-avatar size="60" class="cursor-grab hack_selector-drag">
+        <v-avatar :class="$style['cursor-grab']" class="hack_selector-drag cursor-grab" size="60">
           <v-icon size="60">mdi-drag-variant</v-icon>
         </v-avatar>
 
@@ -85,7 +87,9 @@ import {
   useAnimate,
   type MaybeElement,
   useDocumentVisibility,
+  onLongPress,
 } from '@vueuse/core'
+import { vOnLongPress } from '@vueuse/components'
 import { seededRandom } from '../util'
 import type { TokenI } from '@/_types'
 import { Otp } from '@/services'
@@ -98,13 +102,26 @@ export default v.defineComponent({
     forceAnimationUpdate: { required: true, type: Boolean },
   },
 
+  directives: {
+    'long-press': vOnLongPress,
+  },
+
   setup(props, { expose }) {
     const otpService = v.inject(Otp.token) as Otp
     assert(otpService)
 
-    const displayCode = v.toRef(() => otpService.reactive.codes[props.token.id])
+    const displayCode = v.ref<string | undefined>(otpService.reactive.codes[props.token.id])
+    v.watch(
+      v.toRef(() => otpService.reactive.codes[props.token.id]),
+      (arg) => {
+        displayCode.value = ''
+        requestAnimationFrame(() => {
+          displayCode.value = arg
+        })
+      }
+    )
 
-    const rootRef = v.ref() as v.Ref<Element | undefined>
+    const rootRef = v.ref() as v.Ref<MaybeElement>
     const isEdit = useEdit(rootRef)
     const color = getColorForString(props.token.label)
 
@@ -117,11 +134,16 @@ export default v.defineComponent({
       () => forcedUpdate(false)
     )
 
+    // onLongPress(rootRef, () => isEdit.value || ((isEdit.value = true), false), {
+    //   modifiers: { prevent: true },
+    // })
+
     return {
       rootRef,
       transitionDirection,
       transitionDuration,
       transitionState,
+
       remove: () => {
         const tokens = otpService.reactive.tokens
         tokens.splice(tokens.indexOf(props.token), 1)
@@ -186,7 +208,7 @@ function useTransitionValue(token: TokenI) {
   return { transitionState, transitionDuration, transitionDirection, forcedUpdate }
 }
 
-function useEdit(rootRef: v.Ref<Element | undefined>) {
+function useEdit(rootRef: v.Ref<MaybeElement>) {
   const isEdit = v.ref(false)
 
   whenever(isEdit, () => {
@@ -232,6 +254,16 @@ function getColorForString(str: string) {
 :deep(.v-label.v-field-label.v-field-label--floating) {
   top: 3px;
 }
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease-in-out;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>
 
 <style module>
@@ -250,5 +282,9 @@ function getColorForString(str: string) {
 
 .cool-background:hover {
   background-color: #363636;
+}
+
+.cursor-grab {
+  cursor: grab;
 }
 </style>

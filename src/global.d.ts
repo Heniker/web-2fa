@@ -10,6 +10,7 @@ declare module 'vue' {
   interface ComponentCustomProperties {
     console: Console
     display: ReturnType<typeof useDisplay>
+    isMotionReduce: boolean
   }
 
   interface ComponentCustomProps {

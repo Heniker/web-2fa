@@ -82,6 +82,12 @@ app.runWithContext(() => {
   app.config.globalProperties.display = v.reactive(useDisplay()) as any
 })
 
+// probably will need to implement some actual settings page
+// but this will do for now
+app.config.globalProperties.isMotionReduce =
+  window.matchMedia(`(prefers-reduced-motion: reduce)`).matches === true
+
+app.config.globalProperties.console = console
 app.config.globalProperties.window = window
 app.provide(appToken, app)
 

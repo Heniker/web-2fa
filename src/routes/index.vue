@@ -2,7 +2,7 @@
   <Teleport to="#app-bar-portal">
     <v-app-bar>
       <v-container fluid class="d-flex">
-        <Teleport to="#app-overlay-portal" :disabled="!display.smAndDown">
+        <Teleport to="#app-bottom-portal" :disabled="!display.smAndDown">
           <v-btn
             v-if="isContextSetUp"
             :class="[display.smAndDown ? $style['add-new-mobile'] : '']"

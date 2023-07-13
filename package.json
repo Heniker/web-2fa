@@ -7,6 +7,7 @@
   },
   "#portal-vue": "^3.0.0",
   "dependencies": {
+    "@vueuse/components": "^10.2.1",
     "@vueuse/core": "^10.2.1",
     "assert": "^2.0.0",
     "idb-keyval": "^6.2.1",

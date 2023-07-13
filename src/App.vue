@@ -79,12 +79,4 @@ export default v.defineComponent({
   /* contain: content;
   content-visibility: auto; */
 }
-
-.cursor-pointer {
-  cursor: pointer;
-}
-
-.cursor-grab {
-  cursor: grab;
-}
 </style>

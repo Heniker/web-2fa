@@ -19,7 +19,6 @@ Security related functionality can be found in `src/services/Security.ts`
 <!--
 
 todo:
-simple editing on mobile
 setup password ttl
 steam account support
 search functionality
@@ -34,6 +33,7 @@ keyboard navigation
 
 done:
 DnD
+? simple editing on mobile
 
 edge messes up timers even when page is visible. user has to make clicks on page for it not to throttle
 this makes animation timings wrong. Also token's code generation can be delayed by up to 1 second
