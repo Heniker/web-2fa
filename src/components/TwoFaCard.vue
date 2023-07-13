@@ -6,9 +6,23 @@
     color="#DCEFEF"
     variant="outlined"
     v-long-press="() => isEdit || (isEdit = true)"
+    :ripple="false"
+    @click.left.passive="copyCode"
     @click.right.prevent="() => isEdit || (isEdit = true)"
     @contextmenu.prevent
   >
+    <Transition name="fade" :css="!isMotionReduce" mode="out-in" :duration="1000">
+      <v-sheet
+        v-show="isCopyNotification"
+        :class="$style['code-copy-notification']"
+        class="justify-center align-center"
+        elevation="20"
+        rounded
+        color="grey-lighten-4"
+      >
+        <span class="text-h4">Copied</span>
+      </v-sheet>
+    </Transition>
     <div class="pa-2 d-flex justify-space-between h-100">
       <div class="flex-grow-1">
         <template v-if="isEdit">
@@ -39,10 +53,14 @@
           <v-card-subtitle>
             <span>{{ token.description || '&shy;' }}</span>
           </v-card-subtitle>
-          <v-card-text>
-            <Transition :name="isMotionReduce ? undefined : 'fade'" mode="out-in">
-              <span v-if="displayCode" class="text-h2 my-auto text-h3">
-                {{ displayCode }}
+          <v-card-text class="d-flex">
+            <Transition name="fade" :css="!isMotionReduce" mode="out-in">
+              <span :key="displayCode" class="my-auto text-h3">
+                {{
+                  displayCode.length === 6
+                    ? `${displayCode.slice(0, 3)} ${displayCode.slice(3)}`
+                    : displayCode
+                }}
               </span>
             </Transition>
           </v-card-text>
@@ -69,15 +87,15 @@
       transitionDuration: `${transitionDuration}ms`,
       transformOrigin: transitionDirection ? 'left' : 'right',
     }"
-    class="bg-deep-purple-darken-3"
     :class="$style.progressbar"
+    class="bg-deep-purple-darken-3"
   ></div>
 </template>
 
 <script lang="ts">
 import * as v from 'vue'
 import * as otp from 'otpauth'
-import { useDisplay } from 'vuetify'
+import { Ripple } from 'vuetify/directives'
 import {
   computedEager,
   onClickOutside,
@@ -110,20 +128,24 @@ export default v.defineComponent({
     const otpService = v.inject(Otp.token) as Otp
     assert(otpService)
 
-    const displayCode = v.ref<string | undefined>(otpService.reactive.codes[props.token.id])
-    v.watch(
-      v.toRef(() => otpService.reactive.codes[props.token.id]),
-      (arg) => {
-        displayCode.value = ''
-        requestAnimationFrame(() => {
-          displayCode.value = arg
-        })
-      }
-    )
+    const displayCode = v.ref(v.computed(() => otpService.reactive.codes[props.token.id] || ''))
 
     const rootRef = v.ref() as v.Ref<MaybeElement>
     const isEdit = useEdit(rootRef)
     const color = getColorForString(props.token.label)
+
+    const isCopyNotification = v.ref(false)
+    const copyCode = () => {
+      if (isEdit.value) {
+        return
+      }
+
+      isCopyNotification.value = true
+      window.navigator.clipboard.writeText(displayCode.value)
+      setTimeout(() => {
+        isCopyNotification.value = false
+      }, 1500)
+    }
 
     // custom transition is used instead of animations API because it seems to be MUCH more cpu-efficient
     const { transitionDuration, transitionState, transitionDirection, forcedUpdate } =
@@ -134,23 +156,23 @@ export default v.defineComponent({
       () => forcedUpdate(false)
     )
 
-    // onLongPress(rootRef, () => isEdit.value || ((isEdit.value = true), false), {
-    //   modifiers: { prevent: true },
-    // })
-
     return {
       rootRef,
+
+      isCopyNotification,
       transitionDirection,
       transitionDuration,
       transitionState,
+
+      isEdit,
+      color,
+      displayCode,
 
       remove: () => {
         const tokens = otpService.reactive.tokens
         tokens.splice(tokens.indexOf(props.token), 1)
       },
-      isEdit,
-      color,
-      displayCode,
+      copyCode,
     }
   },
 })
@@ -272,6 +294,18 @@ function getColorForString(str: string) {
   margin-top: -3px;
   height: 3px;
   width: 100%;
+}
+
+.code-copy-notification {
+  display: flex;
+  transition-duration: 0.4s !important;
+  position: absolute;
+  top: 50%;
+  right: 50%;
+  transform: translate(50%, -50%);
+  opacity: 0.35;
+  padding: 15px 30px;
+  z-index: 1;
 }
 
 .cool-background {

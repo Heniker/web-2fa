@@ -8,8 +8,9 @@
 
         <v-card-text>
           <!-- <v-form> -->
-          <ProvideValue v-slot="slot" :isPassVisible="false">
+          <ProvideValue v-slot="slot" :isPassVisible="false" :selectionStart="0">
             <v-text-field
+              ref="passInputRef"
               v-model="password"
               class="mt-3"
               autofocus
@@ -18,7 +19,15 @@
               :rules="[(v) => !!v || 'Password is required']"
               :type="slot.isPassVisible ? 'text' : 'password'"
               label="Decryption password"
-              @click:append-inner="slot.isPassVisible = !slot.isPassVisible"
+              @click:append-inner="
+                () => {
+                  slot.isPassVisible = !slot.isPassVisible
+                  const selectionStart = passInputRef.selectionStart
+                  window.requestAnimationFrame(() => {
+                    passInputRef.$el.querySelector('input').selectionStart = selectionStart
+                  })
+                }
+              "
               @keyup.enter="onPasswordAccept"
             ></v-text-field>
           </ProvideValue>
@@ -55,6 +64,7 @@ export default v.defineComponent({
     assert(otpService)
     const securityService = v.inject(Security.token)
     assert(securityService)
+
     const router = useRouter()
     const password = v.ref('')
 
@@ -63,7 +73,7 @@ export default v.defineComponent({
       router.push({ name: '' + require.resolve('@/routes/index.vue') })
     }
 
-    return { display: useDisplay(), password, onPasswordAccept }
+    return { display: useDisplay(), password, onPasswordAccept, passInputRef: v.ref<Element>() }
   },
 })
 </script>

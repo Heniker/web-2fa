@@ -52,7 +52,7 @@ export const appInject = <T>(token: v.InjectionKey<T>) => {
 /**
  * So, this decorator makes all async functions in a class begin on queueMicrotask, rather than sync \
  * Normally when async function is called it begins its execution synchronously
- * and returns its value on queueMicrotask (unless there are any truly async operations within function)
+ * and returns its value on queueMicrotask (unless there are any 'await's within function)
  *
  * This decorator is not required, but without it manually adding `await 1` to any function that uses injected service is mandatory
  *

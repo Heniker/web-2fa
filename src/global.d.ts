@@ -9,6 +9,7 @@ type PickByValue<T, V> = Pick<T, { [K in keyof T]: T[K] extends V ? K : never }[
 declare module 'vue' {
   interface ComponentCustomProperties {
     console: Console
+    window: Window
     display: ReturnType<typeof useDisplay>
     isMotionReduce: boolean
   }

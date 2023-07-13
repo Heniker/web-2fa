@@ -1,6 +1,7 @@
 ;(() => {
   var assert
   // only if assert not defined by webpack
+  // which happens to be during prod build
   assert ??
     (window.assert = (c) => {
       if (!c) {
@@ -15,15 +16,6 @@ if (isEdge) {
   console.log(`Edge browser`)
 }
 
-import 'vuetify/lib/styles/main.css'
-import * as v from 'vue'
-import * as Router from 'vue-router'
-import { createVuetify, useDisplay } from 'vuetify'
-import { buildPages } from 'vue-pages-builder'
-import * as services from './services'
-import App from './App.vue'
-import { appToken } from './services/util'
-
 {
   // My way to run tests
   const tests = require.context('.', true, /\.test\.ts/) // tests are ignored during prod build
@@ -34,6 +26,15 @@ import { appToken } from './services/util'
 assert(globalThis, 'globalThis is not avaliable')
 assert(globalThis.indexedDB, 'indexedDB is not avaliable')
 assert(globalThis.crypto.subtle, 'crypto.subtle is not avaliable')
+
+import 'vuetify/lib/styles/main.css'
+import * as v from 'vue'
+import * as Router from 'vue-router'
+import { createVuetify, useDisplay } from 'vuetify'
+import { buildPages } from 'vue-pages-builder'
+import * as services from './services'
+import App from './App.vue'
+import { appToken } from './services/util'
 
 const app = v.createApp(App)
 const vuetify = createVuetify({

@@ -19,19 +19,23 @@ Security related functionality can be found in `src/services/Security.ts`
 <!--
 
 todo:
+Hide tokens during initial render (to avoid flicker)
 setup password ttl
 steam account support
-search functionality
-copy code on click
 copy code to clipboard on `url/id` open
-icons for accounts
 qr code support
-toggle show password should remember cursor position
-move otpauth to different lazy chunk
 keyboard navigation
+search functionality
+data sync with WebRTC
+translations?
+
+move otpauth to different lazy chunk
+icons for accounts
 ?show global timer if all tokens are of same period
 
 done:
+copy code on click
+toggle show password should remember cursor position
 DnD
 ? simple editing on mobile
 
