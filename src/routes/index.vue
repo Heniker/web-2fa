@@ -1,23 +1,33 @@
 <template>
+  <Teleport to="#app-navigation-portal">
+    <Sidebar v-model="isSideBarOpen"></Sidebar>
+  </Teleport>
   <Teleport to="#app-bar-portal">
-    <v-app-bar>
-      <v-container fluid class="d-flex">
-        <Teleport to="#app-bottom-portal" :disabled="!display.smAndDown">
-          <v-btn
-            v-if="isContextSetUp"
-            :class="[display.smAndDown ? $style['add-new-mobile'] : '']"
-            :size="display.smAndDown ? 'x-large' : undefined"
-            @click="addToken"
-            aria-label="Create new token"
-            color="deep-purple-darken-1"
-            variant="elevated"
-            elevation="4"
-            icon="mdi-plus"
-            class="ml-auto"
-          ></v-btn>
-        </Teleport>
-      </v-container>
-    </v-app-bar>
+    <v-app-bar-nav-icon
+      v-if="isContextSetUp"
+      :class="[display.smAndDown ? $style['add-new-mobile'] : '']"
+      :size="display.smAndDown ? 'x-large' : undefined"
+      @click="isSideBarOpen = !isSideBarOpen"
+      aria-label="Open sidebar"
+      elevation="0"
+      class="order-1"
+      :icon="mdiReorderHorizontal"
+    ></v-app-bar-nav-icon>
+    <!-- <v-btn></v-btn> -->
+    <Teleport to="#app-bottom-portal" :disabled="!display.smAndDown">
+      <v-btn
+        v-if="isContextSetUp"
+        :class="[display.smAndDown ? $style['add-new-mobile'] : '']"
+        :size="display.smAndDown ? 'x-large' : undefined"
+        @click="addToken"
+        aria-label="Add new token"
+        color="deep-purple-darken-1"
+        variant="elevated"
+        elevation="4"
+        :icon="mdiPlus"
+        class="ml-auto order-12"
+      ></v-btn>
+    </Teleport>
   </Teleport>
   <v-container fluid>
     <v-row ref="dndEl">
@@ -32,6 +42,7 @@
 <script lang="ts">
 import * as v from 'vue'
 import * as otp from 'otpauth'
+import { mdiReorderHorizontal, mdiPlus } from '@mdi/js'
 import { useDisplay } from 'vuetify'
 import * as vuetifyComponents from 'vuetify/components'
 import { onClickOutside, watchOnce } from '@vueuse/core'
@@ -41,9 +52,18 @@ import { isResolved } from '@/util'
 import { useRouter, onBeforeRouteUpdate } from 'vue-router'
 import { useDraggable, type UseDraggableReturn } from 'vue-draggable-plus'
 
+const SidebarLazy = v.defineAsyncComponent(
+  () =>
+    import(
+      /* webpackPrefetch: true */
+      '@/components/Sidebar.vue'
+    )
+)
+
 export default v.defineComponent({
   components: {
     TwoFaCard,
+    Sidebar: SidebarLazy,
   },
 
   setup() {
@@ -77,7 +97,7 @@ export default v.defineComponent({
     const forceAnimationUpdate = v.ref(false)
 
     watchOnce(dndEl, () => {
-      const draggable = useDraggable<UseDraggableReturn>(dndEl, tokens, {
+      useDraggable<UseDraggableReturn>(dndEl, tokens, {
         emptyInsertThreshold: 0,
         animation: 150,
         handle: '.hack_selector-drag',
@@ -86,17 +106,21 @@ export default v.defineComponent({
           queueMicrotask(() => (forceAnimationUpdate.value = false))
         },
       })
-      console.log('draggable')
-      console.log(draggable)
     })
 
+    const isSideBarOpen = v.ref(false)
+
     return {
-      forceAnimationUpdate,
       dndEl,
+      isSideBarOpen,
+      forceAnimationUpdate,
       tokens,
       isContextSetUp,
       isAdding,
       addToken,
+
+      mdiReorderHorizontal,
+      mdiPlus,
     }
   },
 })

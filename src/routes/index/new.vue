@@ -42,17 +42,8 @@
           >
             Cancel
           </v-btn>
-          <!-- <v-btn
-            @click="isSettingsExpanded = !isSettingsExpanded"
-            :class="[$style['expand-btn'], isSettingsExpanded && $style['expand-btn--active']]"
-            class="mb-n2"
-            color="grey-darken-1"
-            variant="outlined"
-            icon="mdi-chevron-double-down"
-          ></v-btn> -->
           <v-btn
             @click="isSettingsExpanded = !isSettingsExpanded"
-            :class="[$style['expand-btn']]"
             class="mb-n4"
             size="small"
             color="grey-darken-1"
@@ -149,31 +140,19 @@ export default v.defineComponent({
 })
 </script>
 
-<style scoped>
-.test {
-  flex-basis: 0px;
-}
-</style>
+<style scoped></style>
 <style module>
 .overlay {
   z-index: 1;
   position: absolute;
-  /* display: flex; */
   top: 30%;
   left: 50%;
   transform: translate(-50%, 0);
-  /* align-items: center;
-  justify-content: space-around; */
 }
 
 .scrim {
   width: 100%;
   height: 100%;
   backdrop-filter: grayscale(0.5) blur(2px);
-}
-
-.expand-btn i {
-  margin-top: 3px;
-  font-size: 1.7em;
 }
 </style>

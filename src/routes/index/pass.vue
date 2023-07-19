@@ -15,7 +15,7 @@
               class="mt-3"
               autofocus
               density="default"
-              :append-inner-icon="slot.isPassVisible ? 'mdi-eye' : 'mdi-eye-off'"
+              :append-inner-icon="slot.isPassVisible ? mdiEye : mdiEyeOff"
               :rules="[(v) => !!v || 'Password is required']"
               :type="slot.isPassVisible ? 'text' : 'password'"
               label="Decryption password"
@@ -52,6 +52,7 @@
 <script lang="ts">
 import type { TokenI } from '@/_types'
 import * as v from 'vue'
+import { mdiEye, mdiEyeOff } from '@mdi/js'
 import { useDisplay } from 'vuetify'
 import { Otp, Security } from '@/services'
 import { ProvideValue } from '@/util'
@@ -73,7 +74,15 @@ export default v.defineComponent({
       router.push({ name: '' + require.resolve('@/routes/index.vue') })
     }
 
-    return { display: useDisplay(), password, onPasswordAccept, passInputRef: v.ref<Element>() }
+    return {
+      display: useDisplay(),
+      password,
+      onPasswordAccept,
+      passInputRef: v.ref<Element>(),
+
+      mdiEyeOff,
+      mdiEye,
+    }
   },
 })
 </script>

@@ -1,17 +1,17 @@
 <template>
   <v-card
-    ref="rootRef"
-    :class="$style['cool-background']"
+    v-click-outside="() => (isEdit = false)"
+    v-long-press="() => isEdit || (isEdit = true)"
+    :class="[$style['cool-background'], $style['root']]"
+    :ripple="false"
     height="170"
     color="#DCEFEF"
     variant="outlined"
-    v-long-press="() => isEdit || (isEdit = true)"
-    :ripple="false"
     @click.left.passive="copyCode"
     @click.right.prevent="() => isEdit || (isEdit = true)"
     @contextmenu.prevent
   >
-    <Transition name="fade" :css="!isMotionReduce" mode="out-in" :duration="1000">
+    <Transition v-if="!isEdit" :css="!isMotionReduce" name="fade" mode="out-in">
       <v-sheet
         v-show="isCopyNotification"
         :class="$style['code-copy-notification']"
@@ -58,7 +58,7 @@
               <span :key="displayCode" class="my-auto text-h3">
                 {{
                   displayCode.length === 6
-                    ? `${displayCode.slice(0, 3)} ${displayCode.slice(3)}`
+                    ? displayCode.slice(0, 3) + displayCode.slice(3)
                     : displayCode
                 }}
               </span>
@@ -70,7 +70,7 @@
       <div v-if="isEdit" class="d-flex flex-column align-center justify-space-around ma-3 ml-0">
         <!-- I am not sure if this is visually obvious enough to be a drag target -->
         <v-avatar :class="$style['cursor-grab']" class="hack_selector-drag cursor-grab" size="60">
-          <v-icon size="60">mdi-drag-variant</v-icon>
+          <v-icon size="60" :icon="mdiDragVariant"></v-icon>
         </v-avatar>
 
         <v-btn color="red" variant="tonal" @click="remove">remove</v-btn>
@@ -95,6 +95,7 @@
 <script lang="ts">
 import * as v from 'vue'
 import * as otp from 'otpauth'
+import { mdiDragVariant } from '@mdi/js'
 import { Ripple } from 'vuetify/directives'
 import {
   computedEager,
@@ -106,6 +107,7 @@ import {
   type MaybeElement,
   useDocumentVisibility,
   onLongPress,
+  watchPausable,
 } from '@vueuse/core'
 import { vOnLongPress } from '@vueuse/components'
 import { seededRandom } from '../util'
@@ -130,9 +132,7 @@ export default v.defineComponent({
 
     const displayCode = v.ref(v.computed(() => otpService.reactive.codes[props.token.id] || ''))
 
-    const rootRef = v.ref() as v.Ref<MaybeElement>
-    const isEdit = useEdit(rootRef)
-    const color = getColorForString(props.token.label)
+    const isEdit = v.ref(false)
 
     const isCopyNotification = v.ref(false)
     const copyCode = () => {
@@ -144,7 +144,7 @@ export default v.defineComponent({
       window.navigator.clipboard.writeText(displayCode.value)
       setTimeout(() => {
         isCopyNotification.value = false
-      }, 1500)
+      }, 1200)
     }
 
     // custom transition is used instead of animations API because it seems to be MUCH more cpu-efficient
@@ -157,22 +157,22 @@ export default v.defineComponent({
     )
 
     return {
-      rootRef,
-
       isCopyNotification,
       transitionDirection,
       transitionDuration,
       transitionState,
+      displayCode,
 
       isEdit,
-      color,
-      displayCode,
+      color: getColorForString(props.token.label),
 
       remove: () => {
         const tokens = otpService.reactive.tokens
         tokens.splice(tokens.indexOf(props.token), 1)
       },
       copyCode,
+
+      mdiDragVariant,
     }
   },
 })
@@ -199,8 +199,8 @@ function useTransitionValue(token: TokenI) {
       transitionDuration.value = 0
       swapDirection && (transitionDirection.value = Number(!transitionDirection.value))
       transitionState.value = transitionDirection.value
-        ? (token.period - time / 1000) / token.period // 0
-        : time / 1000 / token.period // 1
+        ? (token.period - time / 1000) / token.period // close to 0 when period starts
+        : time / 1000 / token.period // close to 1 when period starts
     }
 
     function nextFrame() {
@@ -209,14 +209,10 @@ function useTransitionValue(token: TokenI) {
     }
   }
 
-  forcedUpdate()
-
-  whenever(
-    () => visibility.value === 'visible',
-    () => forcedUpdate()
-  )
-
-  v.watch(
+  // browsers do not call requestAnimationFrame cb when page is not visible
+  // but instead throttle calls to when page becomes active & dispatch all calls at once
+  // this is not the behavior we want, as that can mess up animation, so we pause watch when page is hidden
+  const watchControls = watchPausable(
     v.toRef(() => otpService.reactive.codes[token.id]),
     (current, previous) => {
       if (!previous) {
@@ -227,24 +223,14 @@ function useTransitionValue(token: TokenI) {
     }
   )
 
-  return { transitionState, transitionDuration, transitionDirection, forcedUpdate }
-}
-
-function useEdit(rootRef: v.Ref<MaybeElement>) {
-  const isEdit = v.ref(false)
-
-  whenever(isEdit, () => {
-    const cancel = onClickOutside(
-      rootRef as any,
-      () => {
-        isEdit.value = false
-        cancel?.()
-      },
-      { capture: true }
-    )
+  v.watch(visibility, (arg) => {
+    arg === 'visible' && (forcedUpdate(), watchControls.resume())
+    arg === 'hidden' && watchControls.pause()
   })
 
-  return isEdit
+  forcedUpdate()
+
+  return { transitionState, transitionDuration, transitionDirection, forcedUpdate }
 }
 
 function getColorForString(str: string) {
@@ -273,10 +259,6 @@ function getColorForString(str: string) {
 </script>
 
 <style scoped>
-:deep(.v-label.v-field-label.v-field-label--floating) {
-  top: 3px;
-}
-
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease-in-out;
@@ -289,6 +271,10 @@ function getColorForString(str: string) {
 </style>
 
 <style module>
+.root :global(.v-label.v-field-label.v-field-label--floating) {
+  top: 3px;
+}
+
 .progressbar {
   transition-timing-function: linear;
   margin-top: -3px;
@@ -311,11 +297,10 @@ function getColorForString(str: string) {
 .cool-background {
   background-color: #292929;
   border-color: #3b3b3b;
-  /* background-color: #5A7172; */
 }
 
 .cool-background:hover {
-  background-color: #363636;
+  background-color: #3636363a;
 }
 
 .cursor-grab {

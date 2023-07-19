@@ -19,19 +19,22 @@ Security related functionality can be found in `src/services/Security.ts`
 <!--
 
 todo:
-Hide tokens during initial render (to avoid flicker)
 setup password ttl
 steam account support
-copy code to clipboard on `url/id` open
+Hide tokens during initial render (to avoid flicker)
 qr code support
-keyboard navigation
-search functionality
+keyboard navigation (& esc to close any dialog)
 data sync with WebRTC
+search functionality
 translations?
 
+add aria attributes to buttons, imgs, etc
+copy code to clipboard on `url/id` open
 move otpauth to different lazy chunk
 icons for accounts
+tokens should use single setInterval/setTimeout for each period (minor performance optimization)
 ?show global timer if all tokens are of same period
+?custom clock?
 
 done:
 copy code on click

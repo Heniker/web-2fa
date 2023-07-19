@@ -5,6 +5,7 @@ import { appInject, delayAsyncFunctions } from './util'
 import { Security } from './Security'
 import type { TokenAlgorithmT, TokenI } from '@/_types'
 import { useDebounceFn } from '@vueuse/core'
+import { watchDebounced } from '@vueuse/core'
 
 @delayAsyncFunctions()
 export class Otp {
@@ -61,9 +62,9 @@ export class Otp {
 
   constructor() {
     // this is not a perfect solution, but better than alternatives
-    v.watch(
+    watchDebounced(
       v.toRef(() => this.reactive.tokens),
-      useDebounceFn(async () => {
+      async () => {
         if (!this.reactive.tokens.length) {
           return
         }
@@ -72,8 +73,8 @@ export class Otp {
           'secure-tokens',
           await this.securityService.encrypt(JSON.stringify(this.reactive.tokens))
         )
-      }, 300),
-      { deep: true }
+      },
+      { deep: true, debounce: 300 }
     )
   }
 

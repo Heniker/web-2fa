@@ -31,6 +31,7 @@ import 'vuetify/lib/styles/main.css'
 import * as v from 'vue'
 import * as Router from 'vue-router'
 import { createVuetify, useDisplay } from 'vuetify'
+import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
 import { buildPages } from 'vue-pages-builder'
 import * as services from './services'
 import App from './App.vue'
@@ -38,6 +39,13 @@ import { appToken } from './services/util'
 
 const app = v.createApp(App)
 const vuetify = createVuetify({
+  icons: {
+    defaultSet: 'mdi',
+    aliases,
+    sets: {
+      mdi,
+    },
+  },
   theme: {
     defaultTheme: 'test',
     themes: {
@@ -60,6 +68,7 @@ const vuetify = createVuetify({
 })
 
 {
+  // the way routes are used here reminds me of hammer & nail thing>
   const weakContext = require.context('./routes', true, /.*\.vue/, 'weak')
   var routes = buildPages(weakContext, require.context('./routes', true, /.*\.vue/, 'lazy'), {
     getName: (path) => String(weakContext.resolve(path)),
