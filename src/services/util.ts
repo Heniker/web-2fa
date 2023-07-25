@@ -1,3 +1,4 @@
+import { persist } from '@/util'
 import * as v from 'vue'
 
 // https://github.com/vuejs/core/issues/8594
@@ -52,9 +53,9 @@ export const appInject = <T>(token: v.InjectionKey<T>) => {
 /**
  * So, this decorator makes all async functions in a class begin on queueMicrotask, rather than sync \
  * Normally when async function is called it begins its execution synchronously
- * and returns its value on queueMicrotask (unless there are any 'await's within function)
+ * and returns its value on queueMicrotask (unless there are any await's within function)
  *
- * This decorator is not required, but without it manually adding `await 1` to any function that uses injected service is mandatory
+ * This decorator is not required, but without it beggining async fn with `await Promise.resolve()` is mandatory if it uses injected services
  *
  * The decorator imlementation is rather terrible (methods are replaced on instance, not on prototype),
  * but it does not really matter that much for services
@@ -86,9 +87,8 @@ export const delayAsyncFunctions = () => {
         fnKeysToReplace.forEach((it) => {
           const savedVal = this[it]
 
-          const replaceFn = async (...args: any[]) => {
-            await 1 /* can be any value */
-            return savedVal.call(this, ...args)
+          const replaceFn = (...args: any[]) => {
+            return Promise.resolve().then(() => savedVal.call(this, ...args))
           }
 
           Object.defineProperty(this, it, {
@@ -100,5 +100,35 @@ export const delayAsyncFunctions = () => {
         })
       }
     }
+  }
+}
+
+/**
+ * Function is executed only once on first call and then always returns stored value
+ */
+export const once = () => {
+  return <This, T extends (this: This, ...args: any) => any>(
+    value: T,
+    context: ClassMethodDecoratorContext<This, T>
+  ) => {
+    let isCalled = false
+    let savedVal: ReturnType<T> | undefined = undefined
+
+    const returnVal = function (...args) {
+      if (isCalled) {
+        return savedVal
+      }
+
+      isCalled = true
+      savedVal = value.call(this, ...args)
+
+      return savedVal
+    } as T
+
+    return value.constructor.name === 'AsyncFunction'
+      ? (async function (...args) {
+          return returnVal.call(this, ...args)
+        } as T)
+      : returnVal
   }
 }

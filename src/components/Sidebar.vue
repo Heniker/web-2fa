@@ -2,8 +2,6 @@
   <v-navigation-drawer
     :modelValue="modelValue"
     :order="-1"
-    temporary
-    disableResizeWatcher
     @update:model-value="(arg) => $emit('update:modelValue', arg)"
   >
     <div :class="$style['side-bar-content']" class="d-flex flex-column h-100">
@@ -14,7 +12,11 @@
           :prepend-icon="mdiBackupRestore"
           title="Import & Backup"
         ></v-list-item>
-        <v-list-item @click="" :prepend-icon="mdiCog" title="Settings"></v-list-item>
+        <v-list-item
+          :to="{ name: '' + require.resolve('@/routes/index/settings.vue') }"
+          :prepend-icon="mdiCog"
+          title="Settings"
+        ></v-list-item>
       </v-list>
       <v-list nav class="mt-auto">
         <v-list-item @click="" :prepend-icon="mdiXml" title="Source Code"></v-list-item>
@@ -26,13 +28,21 @@
 <script lang="ts">
 import * as v from 'vue'
 import { mdiXml, mdiWifiSync, mdiBackupRestore, mdiCog } from '@mdi/js'
-import { useRouter } from 'vue-router'
+import { onBeforeRouteUpdate, useRouter } from 'vue-router'
 
 export default v.defineComponent({
   components: {},
   props: { modelValue: { type: Boolean, required: true } },
 
-  setup(props) {
+  setup(props, { emit }) {
+    const isOpen = props.modelValue
+
+    // onBeforeRouteUpdate(() => {
+    //   setTimeout(() => {
+    //     emit('update:modelValue', true)
+    //   })
+    // })
+
     return {
       isOpen: props.modelValue,
 
@@ -44,6 +54,15 @@ export default v.defineComponent({
   },
 })
 </script>
+
+<style scoped>
+/* .v-navigation-drawer__scrim {
+  background: unset;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: grayscale(0.5) blur(2px);
+} */
+</style>
 
 <style module>
 .side-bar-content i {

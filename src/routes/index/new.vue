@@ -1,8 +1,12 @@
 <template>
   <Teleport to="#app-overlay-portal">
-    <div :class="$style.scrim"></div>
-    <section :class="$style['overlay']">
-      <v-card :width="display.smAndDown.value ? '90vw' : 400">
+    <section :class="[$style['scrim']]">
+      <v-card
+        v-click-outside="() => $router.push({ name: '' + require.resolve('@/routes/index.vue') })"
+        :class="$style['overlay']"
+        class="pb-2"
+        :width="display.smAndDown.value ? '90vw' : 400"
+      >
         <v-card-title class="d-flex justify-center mt-3 mb-1 text-h4">Add 2FA</v-card-title>
 
         <v-card-text class="pb-2">
@@ -43,11 +47,11 @@
             Cancel
           </v-btn>
           <v-btn
-            @click="isSettingsExpanded = !isSettingsExpanded"
+            @click="isAdvancedExpanded = !isAdvancedExpanded"
             class="mb-n4"
             size="small"
             color="grey-darken-1"
-            :variant="isSettingsExpanded ? 'outlined' : 'text'"
+            :variant="isAdvancedExpanded ? 'outlined' : 'text'"
           >
             advanced
           </v-btn>
@@ -64,8 +68,8 @@
         </v-card-actions>
 
         <v-expand-transition>
-          <v-sheet v-show="isSettingsExpanded">
-            <v-row no-gutters class="pb-4 pt-2 px-4">
+          <v-sheet v-show="isAdvancedExpanded">
+            <v-row no-gutters class="pt-2 px-4">
               <v-col class="mr-4">
                 <v-select
                   v-model="token.algorithm"
@@ -134,7 +138,7 @@ export default v.defineComponent({
       tokenSecret,
       saveToken,
       otpService,
-      isSettingsExpanded: v.ref(false),
+      isAdvancedExpanded: v.ref(false),
     }
   },
 })
@@ -151,8 +155,6 @@ export default v.defineComponent({
 }
 
 .scrim {
-  width: 100%;
-  height: 100%;
-  backdrop-filter: grayscale(0.5) blur(2px);
+  composes: scrim from './style.module.css';
 }
 </style>

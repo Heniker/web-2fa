@@ -17,7 +17,7 @@ export class Security {
   reactive = v.reactive({ isContextSetUp: false })
 
   async encrypt(data: string) {
-    await until(v.toRef(this.reactive, 'isContextSetUp')).toBe(true)
+    await until(v.toRef(() => this.reactive.isContextSetUp)).toBe(true)
 
     assert(this.encryptionKey)
     assert(this.encryptionIv)
@@ -32,7 +32,7 @@ export class Security {
   }
 
   async decrypt(data: Uint8Array) {
-    await until(v.toRef(this.reactive, 'isContextSetUp')).toBe(true)
+    await until(v.toRef(() => this.reactive.isContextSetUp)).toBe(true)
 
     assert(this.encryptionKey)
     assert(this.encryptionIv)
@@ -43,7 +43,7 @@ export class Security {
   }
 
   /**
-   * Password should not be accessible from outside - that's why this function exists
+   * Plain password should not be accessible from outside - that's why this function exists
    */
   async setupSecureContext(plainTextPass: string) {
     if (this.encryptionKey) {

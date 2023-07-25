@@ -1,6 +1,7 @@
 import type { MaybeComputedRef, Pausable, UseIntervalOptions } from '@vueuse/core'
 import { KeyValStorageDataI } from './_types'
-import { useDisplay } from 'vuetify'
+import { useDisplay, useTheme } from 'vuetify'
+import type { Ref } from 'vue'
 
 type Falsy = false | 0 | '' | null | undefined
 type AssertT = (condition: any, msg?: string) => asserts condition
@@ -11,7 +12,7 @@ declare module 'vue' {
     console: Console
     window: Window
     display: ReturnType<typeof useDisplay>
-    isMotionReduce: boolean
+    theme: ReturnType<typeof useTheme> & { name: { value: 'dark' | 'light' } }
   }
 
   interface ComponentCustomProps {
@@ -64,7 +65,11 @@ declare global {
   var assert: AssertT
   var __webpack_module__: typeof module
   var isEdge: boolean
+
+  /** Webpack's publicPath value */
   var publicPath: string
+
+  var _: any
 }
 
 declare module '*.css' {

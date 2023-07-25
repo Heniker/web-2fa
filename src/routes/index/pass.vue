@@ -1,7 +1,7 @@
 <template>
   <Teleport to="#app-overlay-portal">
-    <section class="d-flex justify-center align-center" :class="$style.overlay">
-      <v-card :width="display.smAndDown.value ? '90%' : 400">
+    <section :class="[$style['scrim']]" class="d-flex justify-center align-center">
+      <v-card :width="display.smAndDown.value ? '90%' : 400" class="pb-2">
         <v-card-title class="d-flex justify-center mt-3 mb-1 text-h4">
           Provide password
         </v-card-title>
@@ -34,7 +34,7 @@
           <!-- </v-form> -->
         </v-card-text>
 
-        <v-card-actions class="mb-4 mt-n3 d-flex justify-space-around">
+        <v-card-actions class="mt-n2 d-flex justify-space-around">
           <v-btn
             class="px-10"
             color="deep-purple-accent-1"
@@ -93,9 +93,7 @@ export default v.defineComponent({
 }
 </style>
 <style module>
-.overlay {
-  width: 100%;
-  height: 100%;
-  backdrop-filter: grayscale(0.5) blur(2px);
+.scrim {
+  composes: scrim from './style.module.css';
 }
 </style>

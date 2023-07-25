@@ -1,10 +1,9 @@
 import * as v from 'vue'
 import * as otp from 'otpauth'
 import { PersistentStorage } from './PersistentStorage'
-import { appInject, delayAsyncFunctions } from './util'
+import { appInject, delayAsyncFunctions, once } from './util'
 import { Security } from './Security'
 import type { TokenAlgorithmT, TokenI } from '@/_types'
-import { useDebounceFn } from '@vueuse/core'
 import { watchDebounced } from '@vueuse/core'
 
 @delayAsyncFunctions()
@@ -17,7 +16,7 @@ export class Otp {
   @appInject(Security.token)
   private accessor securityService!: Security
 
-  async fetchStoredTokens() {
+  private async fetchStoredTokens() {
     const encryptedTokens = await this.persistentStorageService.getItem('secure-tokens')
 
     if (!encryptedTokens) {
@@ -51,16 +50,33 @@ export class Otp {
     makeTimer()
   }
 
-  /**
-   * Remaining cycle time in ms
-   *
-   * #todo?> cache
-   */
-  getRemainingTime(token: TokenI) {
-    return token.period * 1000 - (Date.now() % (token.period * 1000))
+  private async generateCodeFor(token: TokenI) {
+    const encryptedSecret = await this.persistentStorageService.getItem(`secure-secret-${token.id}`)
+    assert(encryptedSecret, `Secret not found for token <${token.id}>`)
+
+    const secret = await this.securityService.decrypt(encryptedSecret)
+
+    const code = new otp.TOTP({
+      secret,
+      algorithm: token.algorithm,
+      digits: token.codeLen,
+      period: token.period,
+    }).generate()
+
+    return code
   }
 
-  constructor() {
+  supportedAlgorithms = ['SHA1', 'SHA256', 'SHA512'] as const satisfies readonly TokenAlgorithmT[]
+
+  reactive = v.reactive({
+    tokens: [] as TokenI[],
+    codes: {} as Record<TokenI['id'], string>,
+  })
+
+  @once()
+  async init() {
+    await this.fetchStoredTokens()
+
     // this is not a perfect solution, but better than alternatives
     watchDebounced(
       v.toRef(() => this.reactive.tokens),
@@ -78,37 +94,25 @@ export class Otp {
     )
   }
 
-  reactive = v.reactive({
-    tokens: [] as TokenI[],
-    codes: {} as Record<TokenI['id'], string>,
-  })
-
-  supportedAlgorithms = ['SHA1', 'SHA256', 'SHA512'] as const satisfies readonly TokenAlgorithmT[]
+  /**
+   * Remaining cycle time in ms
+   *
+   * #todo?> cache
+   */
+  getRemainingTime(token: TokenI) {
+    return token.period * 1000 - (Date.now() % (token.period * 1000))
+  }
 
   async addToken(token: TokenI, secret: string) {
+    // the order is important, which is bad
+    // #todo?> lets not use array to store tokens
+    // this will make it a bit harder to get secure stuff right though
+
     this.persistentStorageService.setItem(
-      `secret-${token.id}`,
+      `secure-secret-${token.id}`,
       await this.securityService.encrypt(secret)
     )
 
-    // the order is important, which is bad
-    // #todo?> lets not use array to store tokens
     this.setupToken(token)
-  }
-
-  private async generateCodeFor(token: TokenI) {
-    const encryptedSecret = await this.persistentStorageService.getItem(`secret-${token.id}`)
-    assert(encryptedSecret, `Secret not found for token <${token.id}>`)
-
-    const secret = await this.securityService.decrypt(encryptedSecret)
-
-    const code = new otp.TOTP({
-      secret,
-      algorithm: token.algorithm,
-      digits: token.codeLen,
-      period: token.period,
-    }).generate()
-
-    return code
   }
 }

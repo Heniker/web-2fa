@@ -12,7 +12,7 @@ Service instances are constructed in `src/main.ts`.
 
 Each service must have a static `token` property of type `unique Symbol`, which is used to provide service instance to components (via `Vue.inject`) and other services (using `Vue.createApp().runWithContext(() => Vue.inject(symbol))`).
 
-Services may `inject` other services, but injected value will be undefined at the time when constructor is called. This behavior is enforced because proper sync construction order can not be guaranteed. Hence service injection should be non synchronous (use `queueMicrotask`)
+Services may `inject` other services, but injected value will be undefined at the time when constructor is called. This behavior is enforced because proper sync construction order can not be easily guaranteed. Hence service injection should be non synchronous (use `queueMicrotask`)
 
 Services may provide reactive data to components within `reactive` property.<br/>
 Reactive data may be declared as readonly, but please abstain from implementing FLUX pattern (specifically mutations) via services. If you think you need actual state management - use other solutions.<br/>

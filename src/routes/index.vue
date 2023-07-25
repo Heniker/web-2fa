@@ -5,27 +5,26 @@
   <Teleport to="#app-bar-portal">
     <v-app-bar-nav-icon
       v-if="isContextSetUp"
-      :class="[display.smAndDown ? $style['add-new-mobile'] : '']"
       :size="display.smAndDown ? 'x-large' : undefined"
-      @click="isSideBarOpen = !isSideBarOpen"
+      :icon="mdiReorderHorizontal"
+      class="order-1 mr-auto"
       aria-label="Open sidebar"
       elevation="0"
-      class="order-1"
-      :icon="mdiReorderHorizontal"
+      @click="isSideBarOpen = !isSideBarOpen"
     ></v-app-bar-nav-icon>
     <!-- <v-btn></v-btn> -->
     <Teleport to="#app-bottom-portal" :disabled="!display.smAndDown">
       <v-btn
         v-if="isContextSetUp"
-        :class="[display.smAndDown ? $style['add-new-mobile'] : '']"
         :size="display.smAndDown ? 'x-large' : undefined"
-        @click="addToken"
+        :icon="mdiPlus"
+        :class="[display.smAndDown ? $style['add-new-mobile'] : '']"
+        class="ml-auto order-12"
         aria-label="Add new token"
         color="deep-purple-darken-1"
         variant="elevated"
         elevation="4"
-        :icon="mdiPlus"
-        class="ml-auto order-12"
+        @click="addToken"
       ></v-btn>
     </Teleport>
   </Teleport>
@@ -73,8 +72,6 @@ export default v.defineComponent({
     assert(securityService)
 
     const router = useRouter()
-
-    otpService.fetchStoredTokens()
 
     v.onBeforeMount(async () => {
       const isSecuritySetUp = securityService.reactive.isContextSetUp

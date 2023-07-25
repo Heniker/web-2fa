@@ -27,10 +27,10 @@ assert(globalThis, 'globalThis is not avaliable')
 assert(globalThis.indexedDB, 'indexedDB is not avaliable')
 assert(globalThis.crypto.subtle, 'crypto.subtle is not avaliable')
 
-import 'vuetify/lib/styles/main.css'
+import 'vuetify/styles/main.css'
 import * as v from 'vue'
 import * as Router from 'vue-router'
-import { createVuetify, useDisplay } from 'vuetify'
+import { createVuetify, useDisplay, useTheme } from 'vuetify'
 import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
 import { buildPages } from 'vue-pages-builder'
 import * as services from './services'
@@ -38,67 +38,49 @@ import App from './App.vue'
 import { appToken } from './services/util'
 
 const app = v.createApp(App)
-const vuetify = createVuetify({
-  icons: {
-    defaultSet: 'mdi',
-    aliases,
-    sets: {
-      mdi,
+{
+  const vuetify = createVuetify({
+    icons: {
+      defaultSet: 'mdi',
+      aliases,
+      sets: {
+        mdi,
+      },
     },
-  },
-  theme: {
-    defaultTheme: 'test',
-    themes: {
-      test: {
-        dark: true,
-        colors: {
-          background: '#2b2b2b',
-          // background: '#1e1e1e',
-          // surface: '#FFFFFF',
-          // primary: '#6200EE',
-          // secondary: '#03DAC6',
-          // error: '#B00020',
-          // info: '#2196F3',
-          // success: '#4CAF50',
-          // warning: '#FB8C00',
+    theme: {
+      defaultTheme: 'dark',
+      themes: {
+        dark: {
+          dark: true,
+          colors: {
+            background: '#2b2b2b',
+            // background: '#1e1e1e',
+            // surface: '#FFFFFF',
+            // primary: '#6200EE',
+            // secondary: '#03DAC6',
+            // error: '#B00020',
+            // info: '#2196F3',
+            // success: '#4CAF50',
+            // warning: '#FB8C00',
+          },
         },
       },
     },
-  },
-})
-
-{
-  // the way routes are used here reminds me of hammer & nail thing>
-  const weakContext = require.context('./routes', true, /.*\.vue/, 'weak')
-  var routes = buildPages(weakContext, require.context('./routes', true, /.*\.vue/, 'lazy'), {
-    getName: (path) => String(weakContext.resolve(path)),
   })
+
+  app.use(vuetify)
 }
 
-const router = Router.createRouter({ routes, history: Router.createWebHistory(publicPath) })
+{
+  const weakContext = require.context('./routes', true, /.*\.vue$/, 'weak')
+  const routes = buildPages(weakContext, require.context('./routes', true, /.*\.vue/, 'lazy'), {
+    getName: (path) => String(weakContext.resolve(path)),
+  })
 
-app.use(router)
-app.use(vuetify)
+  const router = Router.createRouter({ routes, history: Router.createWebHistory(publicPath) })
+  app.use(router)
+}
 
-// PortalVue is used because native teleport is super buggy
-// https://github.com/vuejs/core/issues/5833
-// https://github.com/vuejs/core/issues/5594
-// app.use(PortalVue)
-
-app.runWithContext(() => {
-  // `useDisplay()` is wrapped in `reactive` because
-  // `useDisplay()[someKey]` won't be reactive in template for some reason - you have to add `.value`
-  // Probably vuetify bug, but I found no issues on github
-  app.config.globalProperties.display = v.reactive(useDisplay()) as any
-})
-
-// probably will need to implement some actual settings page
-// but this will do for now
-app.config.globalProperties.isMotionReduce =
-  window.matchMedia(`(prefers-reduced-motion: reduce)`).matches === true
-
-app.config.globalProperties.console = console
-app.config.globalProperties.window = window
 app.provide(appToken, app)
 
 // Create instances first THEN call .provide
@@ -109,5 +91,20 @@ Object.values(services)
     // Do not forget to add `static token` to all services (TS enforces this here)
     app.provide(construct.token, instance)
   })
+
+console.log('<Services constructed>')
+
+app.config.globalProperties.console = console
+app.config.globalProperties.window = window
+
+app.runWithContext(() => {
+  // `useDisplay()` is wrapped in `reactive` because
+  // `useDisplay()[someKey]` won't be reactive in template for some reason - you have to add `.value`
+  // Probably vuetify bug, but I found no issues on github
+  app.config.globalProperties.display = v.reactive(useDisplay()) as any
+  Object.defineProperty(app.config.globalProperties, 'theme', {
+    get: useTheme,
+  })
+})
 
 app.mount('#app')

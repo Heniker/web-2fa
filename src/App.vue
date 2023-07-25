@@ -9,7 +9,7 @@
         <div id="app-bar-portal" :class="$style.portal"></div>
       </v-container>
     </v-app-bar>
-    
+
     <div id="app-navigation-portal" :class="$style.portal"></div>
     <v-main>
       <router-view></router-view>
@@ -27,9 +27,18 @@
 <script lang="ts">
 import * as v from 'vue'
 import { useRoute } from 'vue-router'
+import { Otp, Settings } from './services'
+import { useTheme } from 'vuetify'
 
 export default v.defineComponent({
   setup() {
+    const settingsService = v.inject(Settings.token)
+    assert(settingsService)
+    const otpService = v.inject(Otp.token)
+    assert(otpService)
+
+    otpService.init()
+    settingsService.init(useTheme())
     return {}
   },
 })
@@ -60,7 +69,7 @@ export default v.defineComponent({
   top: 0;
   bottom: 0;
   right: 0;
-  z-index: 2000; /* Vuetify uses z-index 1000 */
+  z-index: 1005; /* Vuetify uses z-index 1000 */
 }
 .overlay:empty {
   display: none;

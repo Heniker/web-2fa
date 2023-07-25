@@ -2,16 +2,16 @@
   <v-card
     v-click-outside="() => (isEdit = false)"
     v-long-press="() => isEdit || (isEdit = true)"
-    :class="[$style['cool-background'], $style['root']]"
+    :class="[theme.name.value === 'dark' && $style['cool-background'], $style['root']]"
     :ripple="false"
+    :color="theme.name.value === 'dark' ? '#DCEFEF' : '#3b3b3b'"
     height="170"
-    color="#DCEFEF"
     variant="outlined"
     @click.left.passive="copyCode"
     @click.right.prevent="() => isEdit || (isEdit = true)"
     @contextmenu.prevent
   >
-    <Transition v-if="!isEdit" :css="!isMotionReduce" name="fade" mode="out-in">
+    <Transition v-if="!isEdit" :css="!preferLessAnimations" name="fade" mode="out-in">
       <v-sheet
         v-show="isCopyNotification"
         :class="$style['code-copy-notification']"
@@ -38,8 +38,8 @@
           <v-card-subtitle class="mt-1">
             <v-text-field
               v-model="token.description"
+              :variant="theme.name.value === 'dark' ? 'solo' : 'solo-filled'"
               label="Description"
-              variant="solo"
               density="comfortable"
               hide-details
             ></v-text-field>
@@ -54,7 +54,7 @@
             <span>{{ token.description || '&shy;' }}</span>
           </v-card-subtitle>
           <v-card-text class="d-flex">
-            <Transition name="fade" :css="!isMotionReduce" mode="out-in">
+            <Transition name="fade" :css="!preferLessAnimations" mode="out-in">
               <span :key="displayCode" class="my-auto text-h3">
                 {{
                   displayCode.length === 6
@@ -77,7 +77,9 @@
       </div>
 
       <v-avatar v-else :color="color" size="90" class="my-auto mr-3 flex-shrink-0">
-        <span class="text-h4 text-black">{{ token.label.charAt(0).toUpperCase() }}</span>
+        <span :class="theme.name.value === 'dark' && 'text-grey-darken-4'" class="text-h4">
+          {{ token.label.charAt(0).toUpperCase() }}
+        </span>
       </v-avatar>
     </div>
   </v-card>
@@ -112,7 +114,7 @@ import {
 import { vOnLongPress } from '@vueuse/components'
 import { seededRandom } from '../util'
 import type { TokenI } from '@/_types'
-import { Otp } from '@/services'
+import { Otp, Settings } from '@/services'
 
 export default v.defineComponent({
   components: {},
@@ -129,6 +131,8 @@ export default v.defineComponent({
   setup(props, { expose }) {
     const otpService = v.inject(Otp.token) as Otp
     assert(otpService)
+    const settingsService = v.inject(Settings.token)
+    assert(settingsService)
 
     const displayCode = v.ref(v.computed(() => otpService.reactive.codes[props.token.id] || ''))
 
@@ -165,6 +169,7 @@ export default v.defineComponent({
 
       isEdit,
       color: getColorForString(props.token.label),
+      preferLessAnimations: v.toRef(() => settingsService.reactive.preferLessAnimations),
 
       remove: () => {
         const tokens = otpService.reactive.tokens

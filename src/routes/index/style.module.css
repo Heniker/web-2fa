@@ -1,0 +1,5 @@
+.scrim {
+  width: 100%;
+  height: 100%;
+  backdrop-filter: grayscale(0.5) blur(2px);
+}

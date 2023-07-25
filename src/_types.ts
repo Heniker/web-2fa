@@ -11,18 +11,27 @@ export interface TokenI {
   description: string
 }
 
-/**
- */
+export interface AppSettingsI {
+  /** ms. time to forget user password. +Infinity allowed */
+  passwordKeepAlive: number
+  theme: 'dark' | 'light'
+  progressBarStyle: 'grouped' | 'multiple'
+  preferLessAnimations: boolean
+}
+
 export interface KeyValStorageDataI {
   /** Encrypted TokenI data. Can be decrpyted with user password and secure-iv */
   'secure-tokens'?: Uint8Array
-  /** 
+  /**
    * Token's secret is stored separetly. This is mostly a convenience so as to not keep secrets in RAM
    * (which is futille bcs no access to mem management, but w/e)
    * #security> This allows to know the amount of stored encrypted tokens
    * This is not a problem per se and no protection is implemented from this rn
    */
-  [key: `secret-${TokenI['id']}`]: Uint8Array
+  [key: `secure-secret-${TokenI['id']}`]: Uint8Array
   /** initialization vector used for encrypted content protection. Can be safely stored alongside encrypted content  */
   'secure-iv'?: Uint8Array
+
+  /** Not encrypted */
+  'app-settings'?: AppSettingsI
 }
