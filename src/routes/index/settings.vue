@@ -74,10 +74,6 @@ export default v.defineComponent({
       selected: v.toRefs(settingsService.reactive).passwordKeepAlive,
       options: [
         {
-          title: 'Instant',
-          value: 0,
-        },
-        {
           title: '1 minute',
           value: 1000 * 60,
         },

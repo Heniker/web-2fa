@@ -1,8 +1,10 @@
 import * as v from 'vue'
-import { managedPromise } from '@/util'
+import { managedPromise, persist } from '@/util'
 import { appInject, delayAsyncFunctions } from './util'
 import { PersistentStorage } from './PersistentStorage'
 import { until } from '@vueuse/core'
+import { Settings } from './Settings'
+import { useIdle } from '@vueuse/core'
 
 @delayAsyncFunctions()
 export class Security {
@@ -10,6 +12,9 @@ export class Security {
 
   @appInject(PersistentStorage.token)
   private accessor persistentStorage!: PersistentStorage
+
+  @appInject(Settings.token)
+  private accessor settings!: Settings
 
   private encryptionKey?: CryptoKey
   private encryptionIv?: Uint8Array
@@ -46,7 +51,7 @@ export class Security {
    * Plain password should not be accessible from outside - that's why this function exists
    */
   async setupSecureContext(plainTextPass: string) {
-    if (this.encryptionKey) {
+    if (this.reactive.isContextSetUp) {
       return
     }
 
@@ -68,5 +73,35 @@ export class Security {
 
     this.encryptionIv = secureIv
     this.reactive.isContextSetUp = true
+
+    /**
+     * useIdle implementation might leak memory, but I did not look at it deep enough to make accusations
+     */
+    const idle = useIdle()
+
+    const setUpForget = () => {
+      const timePassed = Date.now() - idle.lastActive.value
+      clearTimeout(persist(setUpForget))
+
+      const timeout = setTimeout(() => {
+        if (timePassed > this.settings.reactive.passwordKeepAlive) {
+          setUpForget()
+          return
+        }
+
+        this.encryptionIv = undefined
+        this.encryptionKey = undefined
+        this.reactive.isContextSetUp = false
+      }, this.settings.reactive.passwordKeepAlive - timePassed + 100)
+
+      persist(setUpForget, timeout)
+    }
+
+    v.watch(
+      v.toRef(() => this.settings.reactive.passwordKeepAlive),
+      setUpForget
+    )
+
+    setUpForget()
   }
 }

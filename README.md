@@ -20,9 +20,7 @@ Security related functionality can be found in `src/services/Security.ts`
 
 todo:
 handle settings updates:
-  passwordKeepAlive
   progressBarStyle
-setup password ttl
 steam account support
 Hide tokens during initial render (to avoid flicker)
 qr code support
@@ -41,6 +39,7 @@ tokens should use single setInterval/setTimeout for each period (minor performan
 
 done:
 handle settings updates:
+  passwordKeepAlive
   theme
 copy code on click
 toggle show password should remember cursor position

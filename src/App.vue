@@ -26,8 +26,8 @@
 
 <script lang="ts">
 import * as v from 'vue'
-import { useRoute } from 'vue-router'
-import { Otp, Settings } from './services'
+import { useRoute, useRouter } from 'vue-router'
+import { Otp, Security, Settings } from './services'
 import { useTheme } from 'vuetify'
 
 export default v.defineComponent({
@@ -36,9 +36,25 @@ export default v.defineComponent({
     assert(settingsService)
     const otpService = v.inject(Otp.token)
     assert(otpService)
+    const securityService = v.inject(Security.token)
+    assert(securityService)
+
+    const router = useRouter()
 
     otpService.init()
     settingsService.init(useTheme())
+
+    const isSecuritySetUp = v.toRef(() => securityService.reactive.isContextSetUp)
+    v.watch(
+      isSecuritySetUp,
+      () => {
+        if (!isSecuritySetUp.value) {
+          router.push({ name: '' + require.resolve('@/routes/index/pass') })
+        }
+      },
+      { immediate: true }
+    )
+
     return {}
   },
 })

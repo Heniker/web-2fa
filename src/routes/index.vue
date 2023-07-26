@@ -28,7 +28,7 @@
       ></v-btn>
     </Teleport>
   </Teleport>
-  <v-container fluid>
+  <v-container v-if="isContextSetUp" fluid>
     <v-row ref="dndEl">
       <v-col cols="12" md="6" lg="4" xl="3" v-for="token in tokens" :key="token.id">
         <TwoFaCard :token="token" :forceAnimationUpdate="forceAnimationUpdate"></TwoFaCard>
@@ -72,13 +72,6 @@ export default v.defineComponent({
     assert(securityService)
 
     const router = useRouter()
-
-    v.onBeforeMount(async () => {
-      const isSecuritySetUp = securityService.reactive.isContextSetUp
-      if (!isSecuritySetUp) {
-        router.push({ name: '' + require.resolve('./index/pass') })
-      }
-    })
 
     const addToken = () => {
       if (securityService.reactive.isContextSetUp) {
