@@ -1,35 +1,47 @@
 import * as v from 'vue'
-import * as otp from 'otpauth'
 import { PersistentStorage } from './PersistentStorage'
-import { appInject, delayAsyncFunctions, once } from './util'
+import { appInject, once, serviceInit, serviceUntilInit, serviceUntilInject } from './util'
 import { Security } from './Security'
 import type { TokenAlgorithmT, TokenI } from '@/_types'
 import { watchDebounced } from '@vueuse/core'
+import { nanoid } from 'nanoid'
 
-@delayAsyncFunctions()
 export class Otp {
   static token = Symbol() as v.InjectionKey<Otp>
 
+  static formToken(arg: Omit<TokenI, 'id'>) {
+    return {
+      id: nanoid(),
+      label: arg.label,
+      period: arg.period,
+      algorithm: arg.algorithm,
+      digits: arg.digits,
+      issuer: arg.issuer,
+    } as TokenI
+  }
+
   @appInject(PersistentStorage.token)
-  private accessor persistentStorageService!: PersistentStorage
+  private accessor persistentStorage!: PersistentStorage
 
   @appInject(Security.token)
-  private accessor securityService!: Security
+  private accessor security!: Security
 
+  @serviceUntilInject()
   private async fetchStoredTokens() {
-    const encryptedTokens = await this.persistentStorageService.getItem('secure-tokens')
+    const encryptedTokens = await this.persistentStorage.getItem('secure-tokens')
 
     if (!encryptedTokens) {
       console.log('No secure-tokens found in storage')
       return [] as TokenI[]
     }
 
-    const tokens = JSON.parse(await this.securityService.decrypt(encryptedTokens)) as TokenI[]
+    const tokens = JSON.parse(await this.security.decrypt(encryptedTokens)) as TokenI[]
 
     assert(tokens.length, 'Tokens should not be empty. This is a bug')
     tokens.forEach((it) => this.setupToken(it))
   }
 
+  @serviceUntilInject()
   private setupToken(_: TokenI) {
     const tokenRef = v.toRef(_)
     this.reactive.tokens.push(tokenRef.value)
@@ -50,16 +62,19 @@ export class Otp {
     makeTimer()
   }
 
+  @serviceUntilInject()
   private async generateCodeFor(token: TokenI) {
-    const encryptedSecret = await this.persistentStorageService.getItem(`secure-secret-${token.id}`)
+    const encryptedSecret = await this.persistentStorage.getItem(`secure-secret-${token.id}`)
     assert(encryptedSecret, `Secret not found for token <${token.id}>`)
 
-    const secret = await this.securityService.decrypt(encryptedSecret)
+    const otp = await import(/* webpackPrefetch: true */ 'otpauth')
+
+    const secret = await this.security.decrypt(encryptedSecret)
 
     const code = new otp.TOTP({
       secret,
       algorithm: token.algorithm,
-      digits: token.codeLen,
+      digits: token.digits,
       period: token.period,
     }).generate()
 
@@ -73,7 +88,7 @@ export class Otp {
     codes: {} as Record<TokenI['id'], string>,
   })
 
-  @once()
+  @serviceInit()
   async init() {
     await this.fetchStoredTokens()
 
@@ -85,9 +100,9 @@ export class Otp {
           return
         }
 
-        this.persistentStorageService.setItem(
+        this.persistentStorage.setItem(
           'secure-tokens',
-          await this.securityService.encrypt(JSON.stringify(this.reactive.tokens))
+          await this.security.encrypt(JSON.stringify(this.reactive.tokens))
         )
       },
       { deep: true, debounce: 300 }
@@ -103,14 +118,11 @@ export class Otp {
     return token.period * 1000 - (Date.now() % (token.period * 1000))
   }
 
+  @serviceUntilInit()
   async addToken(token: TokenI, secret: string) {
-    // the order is important, which is bad
-    // #todo?> lets not use array to store tokens
-    // this will make it a bit harder to get secure stuff right though
-
-    this.persistentStorageService.setItem(
+    await this.persistentStorage.setItem(
       `secure-secret-${token.id}`,
-      await this.securityService.encrypt(secret)
+      await this.security.encrypt(secret)
     )
 
     this.setupToken(token)

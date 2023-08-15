@@ -4,6 +4,7 @@ import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 import webpack from 'webpack'
+import path from 'path'
 
 /**
  * @typedef {object} EnvT
@@ -26,7 +27,8 @@ export default async (_, argv) => {
    * @type {import('webpack').Configuration & {devServer: any}}
    */
   const result = {
-    devtool: isDev ? 'source-map' : 'source-map',
+    /** `eval-source-map` slows down initial page load by a lot and does not seem worth it in the end */
+    devtool: isDev ? 'source-map' : false,
     resolve: {
       modules: ['node_modules', '.'],
       alias: {
@@ -34,7 +36,7 @@ export default async (_, argv) => {
         // > uncomment if runtime template compiler is required
         // vue: 'vue/dist/vue.esm-bundler.js
       },
-      extensions: ['.js', '.vue', '.ts'],
+      extensions: ['.js', '.vue', '.ts', '.tsx', '.jsx'],
     },
     optimization: {
       moduleIds: 'deterministic',
@@ -44,23 +46,24 @@ export default async (_, argv) => {
         {
           test: /\.vue$/,
           loader: 'vue-loader',
+          // options: { experimentalInlineMatchResource: true },
         },
         {
           test: /\.tsx?$/,
           exclude: /node_modules/,
-          use: [
-            {
-              loader: 'ts-loader',
-              options: {
-                appendTsSuffixTo: [/\.vue$/],
-                transpileOnly: true,
-                onlyCompileBundledFiles: true,
-              },
+          use: {
+            loader: 'babel-loader',
+            options: {
+              presets: [['@babel/preset-typescript', { allExtensions: true, isTSX: true }]],
+              plugins: [
+                ['@vue/babel-plugin-jsx'],
+                ['@babel/plugin-proposal-decorators', { version: '2023-05' }],
+              ],
             },
-          ],
+          },
         },
         {
-          test: /\.css$/i,
+          test: /\.css$/,
           oneOf: [
             {
               resourceQuery: /module/,
@@ -95,6 +98,7 @@ export default async (_, argv) => {
     },
     devServer: {
       ...(isServe && {
+        host: '0.0.0.0',
         static: false,
         client: {
           overlay: false,
@@ -154,6 +158,7 @@ export default async (_, argv) => {
     experiments: {
       topLevelAwait: true,
       cacheUnaffected: true,
+      asyncWebAssembly: true,
     },
   }
 

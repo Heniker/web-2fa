@@ -1,7 +1,7 @@
 <template>
   <Teleport to="#app-overlay-portal">
-    <section :class="[$style['scrim']]" class="d-flex justify-center align-center">
-      <v-card :width="display.smAndDown.value ? '90%' : 400" class="pb-2">
+    <section :class="$style.scrim" class="d-flex justify-center align-center">
+      <v-card :width="display.smAndDown ? '90%' : 400" class="pb-2">
         <v-card-title class="d-flex justify-center mt-3 mb-1 text-h4">
           Provide password
         </v-card-title>
@@ -13,12 +13,12 @@
               ref="passInputRef"
               v-model="password"
               class="mt-3"
-              autofocus
               density="default"
+              label="Decryption password"
+              :autofocus="true"
               :append-inner-icon="slot.isPassVisible ? mdiEye : mdiEyeOff"
               :rules="[(v) => !!v || 'Password is required']"
               :type="slot.isPassVisible ? 'text' : 'password'"
-              label="Decryption password"
               @click:append-inner="
                 () => {
                   slot.isPassVisible = !slot.isPassVisible
@@ -47,13 +47,15 @@
       </v-card>
     </section>
   </Teleport>
+  <v-snackbar v-model="isError" variant="tonal" color="red">
+    <span class="text-h6 d-flex justify-center">Decryption Error</span>
+  </v-snackbar>
 </template>
 
 <script lang="ts">
 import type { TokenI } from '@/_types'
 import * as v from 'vue'
 import { mdiEye, mdiEyeOff } from '@mdi/js'
-import { useDisplay } from 'vuetify'
 import { Otp, Security } from '@/services'
 import { ProvideValue } from '@/util'
 import { useRouter } from 'vue-router'
@@ -69,13 +71,22 @@ export default v.defineComponent({
     const router = useRouter()
     const password = v.ref('')
 
-    const onPasswordAccept = () => {
-      securityService.setupSecureContext(password.value)
-      router.push({ name: '' + require.resolve('@/routes/index.vue') })
+    const isError = v.ref(false)
+
+    const onPasswordAccept = async () => {
+      // const result = await securityService.setupSecureContext(password.value)
+      const result = await securityService.setupSecureContext(password.value)
+      if (result) {
+        router.push({ name: '' + require.resolve('@/routes/index.vue') })
+      } else {
+        password.value = ''
+        isError.value = true
+      }
     }
 
     return {
-      display: useDisplay(),
+      isError,
+
       password,
       onPasswordAccept,
       passInputRef: v.ref<Element>(),

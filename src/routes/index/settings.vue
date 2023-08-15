@@ -1,15 +1,13 @@
 <template>
   <Teleport to="#app-overlay-portal">
-    <section :class="$style['scrim']">
+    <section :class="$style.scrim" class="d-flex justify-center align-center">
       <v-card
         v-click-outside="{
           include: () => [...window.document.querySelectorAll('.v-select__content')],
           handler: () => $router.push({ name: '' + require.resolve('@/routes/index.vue') }),
         }"
-        :width="display.smAndDown.value ? '90vw' : 400"
-        :class="$style['overlay']"
+        :width="display.smAndDown ? '90vw' : 400"
         class="pb-2"
-        variant="elevated"
       >
         <v-card-title class="d-flex justify-center mt-3 mb-1 text-h4">Settings</v-card-title>
 
@@ -74,6 +72,10 @@ export default v.defineComponent({
       selected: v.toRefs(settingsService.reactive).passwordKeepAlive,
       options: [
         {
+          title: 'Instant',
+          value: 0,
+        },
+        {
           title: '1 minute',
           value: 1000 * 60,
         },
@@ -134,19 +136,11 @@ export default v.defineComponent({
 
 <style scoped></style>
 <style module>
-.overlay {
-  z-index: 1;
-  position: absolute;
-  top: 30%;
-  left: 50%;
-  transform: translate(-50%, 0);
+.switch :global(.v-switch__thumb) {
+  color: #7844d3;
 }
 
 .scrim {
   composes: scrim from './style.module.css';
-}
-
-.switch :global(.v-switch__thumb) {
-  color: #7844d3;
 }
 </style>

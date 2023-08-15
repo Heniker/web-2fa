@@ -10,7 +10,6 @@
       </v-container>
     </v-app-bar>
 
-    <div id="app-navigation-portal" :class="$style.portal"></div>
     <v-main>
       <router-view></router-view>
     </v-main>
@@ -22,27 +21,45 @@
 
   <div id="app-overlay-portal" :class="$style.overlay"></div>
   <div id="app-bottom-portal" :class="$style.portal"></div>
+
+  <NotificationMount></NotificationMount>
 </template>
 
 <script lang="ts">
 import * as v from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Otp, Security, Settings } from './services'
+import * as services from '@/services'
 import { useTheme } from 'vuetify'
+import { NotificationMount } from '@/components/Notification'
 
 export default v.defineComponent({
+  components: {
+    NotificationMount,
+  },
   setup() {
-    const settingsService = v.inject(Settings.token)
+    const settingsService = v.inject(services.Settings.token)
     assert(settingsService)
-    const otpService = v.inject(Otp.token)
+    const otpService = v.inject(services.Otp.token)
     assert(otpService)
-    const securityService = v.inject(Security.token)
+    const securityService = v.inject(services.Security.token)
     assert(securityService)
 
+    const vTheme = useTheme()
     const router = useRouter()
 
-    otpService.init()
-    settingsService.init(useTheme())
+    Object.values(services).forEach((it) => {
+      const service = v.inject(it.token) as InstanceType<typeof it>
+
+      assert(service)
+      'init' in service && service.init()
+    })
+
+    v.watch(
+      v.toRef(() => settingsService.reactive.theme),
+      () => {
+        vTheme.global.name.value = settingsService.reactive.theme
+      }
+    )
 
     const isSecuritySetUp = v.toRef(() => securityService.reactive.isContextSetUp)
     v.watch(
@@ -89,6 +106,30 @@ export default v.defineComponent({
 }
 .overlay:empty {
   display: none;
+}
+
+.notificationContainer {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%);
+  z-index: 1006;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex-direction: column-reverse;
+}
+
+.notificationContainer > * {
+  /* animation: show 600ms 100ms cubic-bezier(0.38, 0.97, 0.56, 0.76) forwards; */
+  /* transform: rotateX(-90deg); */
+  /* transform-origin: top center; */
+}
+
+@keyframes show {
+  100% {
+    transform: none;
+  }
 }
 </style>
 

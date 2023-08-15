@@ -70,6 +70,8 @@ declare global {
   var publicPath: string
 
   var _: any
+
+  var __DEV__: boolean
 }
 
 declare module '*.css' {

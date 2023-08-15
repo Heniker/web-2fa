@@ -3,9 +3,9 @@
   // only if assert not defined by webpack
   // which happens to be during prod build
   assert ??
-    (window.assert = (c) => {
+    (window.assert = (c, message) => {
       if (!c) {
-        throw new Error()
+        throw new Error(message)
       }
     })
 })()
@@ -15,6 +15,12 @@ window.isEdge = navigator.userAgentData?.brands.some((it) => it.brand === 'Micro
 if (isEdge) {
   console.log(`Edge browser`)
 }
+
+// Don't want core-js, but this single thing allows to use app on much older browsers
+Array.prototype.at ||
+  (Array.prototype.at = function (num: number) {
+    num < 0 ? this[this.length + num] : this[num]
+  })
 
 {
   // My way to run tests
@@ -38,8 +44,9 @@ import App from './App.vue'
 import { appToken } from './services/util'
 
 const app = v.createApp(App)
-{
-  const vuetify = createVuetify({
+
+app.use(
+  createVuetify({
     icons: {
       defaultSet: 'mdi',
       aliases,
@@ -67,13 +74,19 @@ const app = v.createApp(App)
       },
     },
   })
-
-  app.use(vuetify)
-}
+)
 
 {
   const weakContext = require.context('./routes', true, /.*\.vue$/, 'weak')
-  const routes = buildPages(weakContext, require.context('./routes', true, /.*\.vue/, 'lazy'), {
+  // #todo!> see if webpackPrefetch actually does something here
+  const lazyContext = require.context(
+    /* webpackPrefetch: true */
+    './routes',
+    true,
+    /.*\.vue/,
+    'lazy-once'
+  )
+  const routes = buildPages(weakContext, lazyContext, {
     getName: (path) => String(weakContext.resolve(path)),
   })
 
@@ -81,7 +94,7 @@ const app = v.createApp(App)
   app.use(router)
 }
 
-app.provide(appToken, app)
+app.provide(appToken, app) // https://github.com/vuejs/core/issues/8594
 
 // Create instances first THEN call .provide
 // Because services should not have a chance to use injected instances synchronously
@@ -92,16 +105,14 @@ Object.values(services)
     app.provide(construct.token, instance)
   })
 
-console.log('<Services constructed>')
-
 app.config.globalProperties.console = console
 app.config.globalProperties.window = window
 
 app.runWithContext(() => {
-  // `useDisplay()` is wrapped in `reactive` because
-  // `useDisplay()[someKey]` won't be reactive in template for some reason - you have to add `.value`
+  // `v.reactive` is required for some reason
   // Probably vuetify bug, but I found no issues on github
   app.config.globalProperties.display = v.reactive(useDisplay()) as any
+
   Object.defineProperty(app.config.globalProperties, 'theme', {
     get: useTheme,
   })

@@ -68,8 +68,10 @@ export const resolve = <T = void>(promise: PromiseLike<T>, resolveArg?: T) => {
     storedPromise.status = 'resolved'
     storedPromise.result = resolveArg
 
-    // technically promises are supposed to resolve on `queueMicrotask`, but why not make it sync
-    storedPromise.resolve(resolveArg)
+    // promises are supposed to resolve on `queueMicrotask` 
+    queueMicrotask(() => {
+      storedPromise.resolve(resolveArg)
+    })
   }
 }
 
@@ -80,7 +82,10 @@ export const reject = <T = void>(promise: PromiseLike<T>, rejectArg: any = undef
     storedPromise.status = 'rejected'
     storedPromise.result = rejectArg
 
-    storedPromise.reject(rejectArg)
+    // promises are supposed to resolve on `queueMicrotask`
+    queueMicrotask(() => {
+      storedPromise.reject(rejectArg)
+    })
   }
 }
 

@@ -1,31 +1,41 @@
 <template>
-  <Teleport to="#app-navigation-portal">
-    <Sidebar v-model="isSideBarOpen"></Sidebar>
-  </Teleport>
-  <Teleport to="#app-bar-portal">
+  <Sidebar v-model="isSideBarOpen" v-if="isContextSetUp"></Sidebar>
+  <Teleport to="#app-bar-portal" v-if="isContextSetUp">
     <v-app-bar-nav-icon
-      v-if="isContextSetUp"
-      :size="display.smAndDown ? 'x-large' : undefined"
+      :size="display.smAndDown ? 'large' : 'default'"
       :icon="mdiReorderHorizontal"
       class="order-1 mr-auto"
       aria-label="Open sidebar"
       elevation="0"
       @click="isSideBarOpen = !isSideBarOpen"
     ></v-app-bar-nav-icon>
-    <!-- <v-btn></v-btn> -->
     <Teleport to="#app-bottom-portal" :disabled="!display.smAndDown">
-      <v-btn
-        v-if="isContextSetUp"
-        :size="display.smAndDown ? 'x-large' : undefined"
-        :icon="mdiPlus"
-        :class="[display.smAndDown ? $style['add-new-mobile'] : '']"
-        class="ml-auto order-12"
-        aria-label="Add new token"
-        color="deep-purple-darken-1"
-        variant="elevated"
-        elevation="4"
-        @click="addToken"
-      ></v-btn>
+      <section
+        :class="
+          display.smAndDown ? [$style.mobileButtons, 'mr-3 mb-3 d-flex flex-column'] : 'order-12'
+        "
+      >
+        <v-btn
+          :icon="mdiQrcodeScan"
+          :to="{ name: '' + require.resolve('./index/qr-code.vue') }"
+          :size="display.smAndDown ? 'large' : 'default'"
+          :class="display.smAndDown ? 'mb-3' : 'mr-3'"
+          :elevation="display.smAndDown ? 7 : 2"
+          aria-label="Scan QR code"
+          color="deep-purple-darken-1"
+          variant="elevated"
+        ></v-btn>
+
+        <v-btn
+          :icon="mdiPlusBoxMultiple"
+          :to="{ name: '' + require.resolve('./index/new.vue') }"
+          :size="display.smAndDown ? 'large' : 'default'"
+          :elevation="display.smAndDown ? 7 : 2"
+          aria-label="Add new token"
+          color="deep-purple-darken-1"
+          variant="elevated"
+        ></v-btn>
+      </section>
     </Teleport>
   </Teleport>
   <v-container v-if="isContextSetUp" fluid>
@@ -41,7 +51,7 @@
 <script lang="ts">
 import * as v from 'vue'
 import * as otp from 'otpauth'
-import { mdiReorderHorizontal, mdiPlus } from '@mdi/js'
+import { mdiReorderHorizontal, mdiPlus, mdiQrcodeScan, mdiPlusBoxMultiple } from '@mdi/js'
 import { useDisplay } from 'vuetify'
 import * as vuetifyComponents from 'vuetify/components'
 import { onClickOutside, watchOnce } from '@vueuse/core'
@@ -51,7 +61,7 @@ import { isResolved } from '@/util'
 import { useRouter, onBeforeRouteUpdate } from 'vue-router'
 import { useDraggable, type UseDraggableReturn } from 'vue-draggable-plus'
 
-const SidebarLazy = v.defineAsyncComponent(
+const Sidebar = v.defineAsyncComponent(
   () =>
     import(
       /* webpackPrefetch: true */
@@ -59,10 +69,12 @@ const SidebarLazy = v.defineAsyncComponent(
     )
 )
 
+export const isSideBarOpenKey = Symbol() as v.InjectionKey<v.Ref<boolean>>
+
 export default v.defineComponent({
   components: {
     TwoFaCard,
-    Sidebar: SidebarLazy,
+    Sidebar,
   },
 
   setup() {
@@ -70,14 +82,6 @@ export default v.defineComponent({
     assert(otpService)
     const securityService = v.inject(Security.token)
     assert(securityService)
-
-    const router = useRouter()
-
-    const addToken = () => {
-      if (securityService.reactive.isContextSetUp) {
-        router.push({ name: '' + require.resolve('./index/new') })
-      }
-    }
 
     const isAdding = v.ref(true)
     const tokens = v.toRefs(otpService.reactive).tokens
@@ -99,18 +103,21 @@ export default v.defineComponent({
     })
 
     const isSideBarOpen = v.ref(false)
+    v.provide(isSideBarOpenKey, isSideBarOpen)
 
     return {
       dndEl,
+
       isSideBarOpen,
       forceAnimationUpdate,
       tokens,
       isContextSetUp,
       isAdding,
-      addToken,
 
       mdiReorderHorizontal,
       mdiPlus,
+      mdiQrcodeScan,
+      mdiPlusBoxMultiple,
     }
   },
 })
@@ -139,9 +146,8 @@ export default v.defineComponent({
 </style>
 
 <style module>
-.add-new-mobile {
+.mobileButtons {
   position: fixed;
-  transform: translate(-20%, -20%);
   bottom: 0px;
   right: 0px;
 }

@@ -1,11 +1,11 @@
 <template>
   <Teleport to="#app-overlay-portal">
-    <section :class="[$style['scrim']]">
+    <section :class="$style.scrim">
       <v-card
         v-click-outside="() => $router.push({ name: '' + require.resolve('@/routes/index.vue') })"
-        :class="$style['overlay']"
+        :class="$style.overlay"
+        :width="display.smAndDown ? '90vw' : 400"
         class="pb-2"
-        :width="display.smAndDown.value ? '90vw' : 400"
       >
         <v-card-title class="d-flex justify-center mt-3 mb-1 text-h4">Add 2FA</v-card-title>
 
@@ -19,10 +19,10 @@
               hide-details
             ></v-text-field>
             <v-text-field
-              v-model="token.description"
+              v-model="token.issuer"
               aria-autocomplete="none"
               class="mt-3"
-              label="Description"
+              label="Description (issuer)"
               hide-details
             ></v-text-field>
             <v-text-field
@@ -133,7 +133,6 @@ export default v.defineComponent({
     }
 
     return {
-      display: useDisplay(),
       token,
       tokenSecret,
       saveToken,
@@ -147,8 +146,8 @@ export default v.defineComponent({
 <style scoped></style>
 <style module>
 .overlay {
-  z-index: 1;
   position: absolute;
+  z-index: 1;
   top: 30%;
   left: 50%;
   transform: translate(-50%, 0);

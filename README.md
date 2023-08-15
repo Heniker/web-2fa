@@ -10,6 +10,10 @@ Data is encrypted and stored locally. No server is used.
 The project uses native Web Crypto API to encrypt and decrypt stored information.<br/>
 Security related functionality can be found in `src/services/Security.ts`
 
+### Contributing
+
+Set VSCode to use built-in TypeScript version
+
 ### Similar projects
 
 [Authenticator (browser extestion)](https://github.com/Authenticator-Extension/Authenticator)<br/>
@@ -19,23 +23,36 @@ Security related functionality can be found in `src/services/Security.ts`
 <!--
 
 todo:
+timers for periods need to be lined up
+see if ts import helpers do anything (tslib) (size-wise)
+qr code support
+handle wrong password input
 handle settings updates:
   progressBarStyle
 steam account support
 Hide tokens during initial render (to avoid flicker)
-qr code support
 keyboard navigation (& esc to close any dialog)
 data sync with WebRTC
-search functionality
+icons specific for issuer
+fuzzy search functionality
+Dran'n'Drop QR code image & config, backup files
+reconsider usage of vue-qrcode-reader
+  It does not allow to use Screen Capture API (idk why it's not supported rn)
+  It uses https://github.com/Sec-ant/barcode-detector under the hood, which does all the heavy lifting
 translations?
+show global timer if all tokens are of same period
+Add visual tracking to qr detection
+
+See if Sortable is better for list reordering
+https://github.com/SortableJS/Sortable
+https://vueuse.org/integrations/useSortable
 
 add aria attributes to buttons, imgs, etc
-copy code to clipboard on `url/id` open
-move otpauth to different lazy chunk
+move otpauth to different lazy chunk, maybe allow Services to be lazy-loaded
 icons for accounts
 tokens should use single setInterval/setTimeout for each period (minor performance optimization)
-?show global timer if all tokens are of same period
-?custom clock?
+? custom clock & time sync?
+? copy code to clipboard on `url/id` open
 
 done:
 handle settings updates:

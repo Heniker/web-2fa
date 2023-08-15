@@ -2,9 +2,9 @@
   <v-navigation-drawer
     :modelValue="modelValue"
     :order="-1"
-    @update:model-value="(arg) => $emit('update:modelValue', arg)"
+    @update:modelValue="(arg) => $emit('update:modelValue', arg)"
   >
-    <div :class="$style['side-bar-content']" class="d-flex flex-column h-100">
+    <div :class="$style.sideBarContent" class="d-flex flex-column h-100">
       <v-list nav>
         <v-list-item @click="" :prepend-icon="mdiWifiSync" title="Local sync"></v-list-item>
         <v-list-item
@@ -19,7 +19,11 @@
         ></v-list-item>
       </v-list>
       <v-list nav class="mt-auto">
-        <v-list-item @click="" :prepend-icon="mdiXml" title="Source Code"></v-list-item>
+        <v-list-item
+          @click="window.open('https://github.com/Heniker/web-2fa', '_blank')"
+          :prepend-icon="mdiXml"
+          title="Source Code"
+        ></v-list-item>
       </v-list>
     </div>
   </v-navigation-drawer>
@@ -32,19 +36,14 @@ import { onBeforeRouteUpdate, useRouter } from 'vue-router'
 
 export default v.defineComponent({
   components: {},
-  props: { modelValue: { type: Boolean, required: true } },
 
-  setup(props, { emit }) {
+  props: { modelValue: { type: Boolean } },
+
+  setup(props, ctx) {
     const isOpen = props.modelValue
 
-    // onBeforeRouteUpdate(() => {
-    //   setTimeout(() => {
-    //     emit('update:modelValue', true)
-    //   })
-    // })
-
     return {
-      isOpen: props.modelValue,
+      isOpen,
 
       mdiWifiSync,
       mdiXml,
@@ -65,15 +64,15 @@ export default v.defineComponent({
 </style>
 
 <style module>
-.side-bar-content i {
+.sideBarContent i {
   font-size: 1.35em;
 }
 
-.side-bar-content :global(.v-list-item__content) {
+.sideBarContent :global(.v-list-item__content) {
   /* vertical-align: middle; */
 }
 
-.side-bar-content :global(.v-list-item-title) {
+.sideBarContent :global(.v-list-item-title) {
   align-items: center;
   align-self: center;
   display: flex;

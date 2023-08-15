@@ -40,7 +40,9 @@ import * as managedPromise from './managedPromise'
   promise.then((arg) => (result = arg))
   managedPromise.resolve(promise, 'test1')
   managedPromise.resolve(promise, 'test2')
-  assert(result === 'test1')
+  setTimeout(() => {
+    assert(result === 'test1')
+  })
 }
 
 {
@@ -53,7 +55,9 @@ import * as managedPromise from './managedPromise'
   )
   managedPromise.resolve(promise, 'test1')
   managedPromise.reject(promise, 'test2')
-  assert(result === 'test1')
+  setTimeout(() => {
+    assert(result === 'test1')
+  })
 }
 
 {
@@ -62,7 +66,9 @@ import * as managedPromise from './managedPromise'
   const promise = managedPromise.make()
   promise.then((arg) => (result += arg)).then((arg) => (result += arg))
   managedPromise.resolve(promise, 1)
-  assert(result === 3)
+  setTimeout(() => {
+    assert(result === 3)
+  })
 }
 
 {
@@ -75,7 +81,9 @@ import * as managedPromise from './managedPromise'
   })
 
   managedPromise.reject(promise, 'rejected')
-  assert(result === 'rejected')
+  setTimeout(() => {
+    assert(result === 'rejected')
+  })
 }
 
 {
@@ -92,7 +100,10 @@ import * as managedPromise from './managedPromise'
     })
 
   managedPromise.reject(promise, 1)
-  assert(result === 2)
+
+  setTimeout(() => {
+    assert(result === 2)
+  })
 }
 
 {
@@ -105,6 +116,7 @@ import * as managedPromise from './managedPromise'
   })
 
   managedPromise.resolve(promise, 'resolved')
+  await promise
   assert(resolvedValue === 'resolved')
 
   managedPromise.reset(promise)
@@ -115,5 +127,6 @@ import * as managedPromise from './managedPromise'
   })
 
   managedPromise.resolve(promise, 'resolved2')
+  await promise
   assert(newResolvedValue === 'resolved2')
 }

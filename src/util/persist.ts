@@ -1,5 +1,6 @@
-const persistCache = new Map()
-const persistKey = Symbol()
+const persistCache = new WeakMap<any, any>()
+const persistKey = {}
+
 /**
  * Last argument is always value to be persisted
  * can be used as a convinence to avoid closures or for simple debugging
@@ -15,7 +16,8 @@ export const persist = (...args: [...any[]]) => {
     if (stored) {
       currentMap = stored
     } else {
-      const wm = new Map()
+      const wm = new WeakMap()
+
       currentMap.set(args[i], wm)
       currentMap = wm
     }
@@ -28,4 +30,19 @@ export const persist = (...args: [...any[]]) => {
   }
 
   currentMap.set(persistKey, lastArg)
+  return undefined
 }
+
+/**
+ * Somewhat typed version of persist
+ */
+export const makePersist = <T extends readonly object[], R extends unknown>() => {
+  const localPersistKey = {}
+  return <J extends R | void = void>(...args: [...T, J?]): J extends R ? void : R => {
+    return persist(localPersistKey, ...args)
+  }
+}
+
+const whenInitCallFinishedP = makePersist<[any], PromiseLike<void>>()
+const b = whenInitCallFinishedP({}, Promise.resolve())
+const a = whenInitCallFinishedP({})

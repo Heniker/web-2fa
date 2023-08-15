@@ -2,7 +2,7 @@
   <v-card
     v-click-outside="() => (isEdit = false)"
     v-long-press="() => isEdit || (isEdit = true)"
-    :class="[theme.name.value === 'dark' && $style['cool-background'], $style['root']]"
+    :class="[theme.name.value === 'dark' && $style.coolBackground, $style.root]"
     :ripple="false"
     :color="theme.name.value === 'dark' ? '#DCEFEF' : '#3b3b3b'"
     height="170"
@@ -14,7 +14,7 @@
     <Transition v-if="!isEdit" :css="!preferLessAnimations" name="fade" mode="out-in">
       <v-sheet
         v-show="isCopyNotification"
-        :class="$style['code-copy-notification']"
+        :class="$style.codeCopyNotification"
         class="justify-center align-center"
         elevation="20"
         rounded
@@ -37,7 +37,7 @@
           </v-card-title>
           <v-card-subtitle class="mt-1">
             <v-text-field
-              v-model="token.description"
+              v-model="token.issuer"
               :variant="theme.name.value === 'dark' ? 'solo' : 'solo-filled'"
               label="Description"
               density="comfortable"
@@ -51,7 +51,7 @@
             <span class="text-h5">{{ token.label || '&shy;' }}</span>
           </v-card-title>
           <v-card-subtitle>
-            <span>{{ token.description || '&shy;' }}</span>
+            <span>{{ token.issuer || '&shy;' }}</span>
           </v-card-subtitle>
           <v-card-text class="d-flex">
             <Transition name="fade" :css="!preferLessAnimations" mode="out-in">
@@ -69,7 +69,7 @@
 
       <div v-if="isEdit" class="d-flex flex-column align-center justify-space-around ma-3 ml-0">
         <!-- I am not sure if this is visually obvious enough to be a drag target -->
-        <v-avatar :class="$style['cursor-grab']" class="hack_selector-drag cursor-grab" size="60">
+        <v-avatar :class="$style.cursorGrab" class="hack_selector-drag" size="60">
           <v-icon size="60" :icon="mdiDragVariant"></v-icon>
         </v-avatar>
 
@@ -119,16 +119,16 @@ import { Otp, Settings } from '@/services'
 export default v.defineComponent({
   components: {},
 
-  props: {
-    token: { required: true, type: Object as v.PropType<TokenI> },
-    forceAnimationUpdate: { required: true, type: Boolean },
-  },
-
   directives: {
     'long-press': vOnLongPress,
   },
 
-  setup(props, { expose }) {
+  props: {
+    token: { type: Object as v.PropType<TokenI>, required: true },
+    forceAnimationUpdate: { type: Boolean },
+  },
+
+  setup(props, ctx) {
     const otpService = v.inject(Otp.token) as Otp
     assert(otpService)
     const settingsService = v.inject(Settings.token)
@@ -151,7 +151,7 @@ export default v.defineComponent({
       }, 1200)
     }
 
-    // custom transition is used instead of animations API because it seems to be MUCH more cpu-efficient
+    // custom transition is used instead of animations API because it turns out to be MUCH more cpu-efficient
     const { transitionDuration, transitionState, transitionDirection, forcedUpdate } =
       useTransitionValue(props.token)
 
@@ -214,9 +214,6 @@ function useTransitionValue(token: TokenI) {
     }
   }
 
-  // browsers do not call requestAnimationFrame cb when page is not visible
-  // but instead throttle calls to when page becomes active & dispatch all calls at once
-  // this is not the behavior we want, as that can mess up animation, so we pause watch when page is hidden
   const watchControls = watchPausable(
     v.toRef(() => otpService.reactive.codes[token.id]),
     (current, previous) => {
@@ -228,6 +225,9 @@ function useTransitionValue(token: TokenI) {
     }
   )
 
+  // browsers do not call requestAnimationFrame cb when page is not visible
+  // instead calls are throttled to when page becomes active & dispatched all at once
+  // this is not the desired behavior, as that can mess up animation, so watch is paused when page is hidden
   v.watch(visibility, (arg) => {
     arg === 'visible' && (forcedUpdate(), watchControls.resume())
     arg === 'hidden' && watchControls.pause()
@@ -287,7 +287,7 @@ function getColorForString(str: string) {
   width: 100%;
 }
 
-.code-copy-notification {
+.codeCopyNotification {
   display: flex;
   transition-duration: 0.4s !important;
   position: absolute;
@@ -299,16 +299,16 @@ function getColorForString(str: string) {
   z-index: 1;
 }
 
-.cool-background {
+.coolBackground {
   background-color: #292929;
   border-color: #3b3b3b;
 }
 
-.cool-background:hover {
+.coolBackground:hover {
   background-color: #3636363a;
 }
 
-.cursor-grab {
+.cursorGrab {
   cursor: grab;
 }
 </style>
