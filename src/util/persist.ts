@@ -4,7 +4,7 @@ const persistKey = {}
 /**
  * Last argument is always value to be persisted
  * can be used as a convinence to avoid closures or for simple debugging
- * do not use it though, as it's extremly easy to get wrong
+ * do not use it though, as it's extremely easy to get wrong
  */
 export const persist = (...args: [...any[]]) => {
   const lastArg = args.at(-1)
@@ -42,7 +42,3 @@ export const makePersist = <T extends readonly object[], R extends unknown>() =>
     return persist(localPersistKey, ...args)
   }
 }
-
-const whenInitCallFinishedP = makePersist<[any], PromiseLike<void>>()
-const b = whenInitCallFinishedP({}, Promise.resolve())
-const a = whenInitCallFinishedP({})

@@ -1,4 +1,4 @@
-const promisesMap = new Map<
+const promisesMap = new WeakMap<
   PromiseLike<any>,
   {
     status: 'resolved' | 'rejected' | ''
