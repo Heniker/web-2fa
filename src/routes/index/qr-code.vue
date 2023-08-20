@@ -50,7 +50,7 @@
 </template>
 
 <script lang="ts">
-import { TokenI, isTokenAlgorithm } from '@/_types'
+import { isTokenAlgorithm } from '@/_types'
 import * as v from 'vue'
 import { URI as OtpUri } from 'otpauth'
 import { mdiEye, mdiEyeOff } from '@mdi/js'

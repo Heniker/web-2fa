@@ -22,9 +22,10 @@
               @click:append-inner="
                 () => {
                   slot.isPassVisible = !slot.isPassVisible
-                  const selectionStart = passInputRef.selectionStart
+                  const component = passInputRef as any
+                  const selectionStart = component.selectionStart
                   window.requestAnimationFrame(() => {
-                    passInputRef.$el.querySelector('input').selectionStart = selectionStart
+                    component.$el.querySelector('input').selectionStart = selectionStart
                   })
                 }
               "
@@ -89,7 +90,7 @@ export default v.defineComponent({
 
       password,
       onPasswordAccept,
-      passInputRef: v.ref<Element>(),
+      passInputRef: v.ref<v.Component>(),
 
       mdiEyeOff,
       mdiEye,

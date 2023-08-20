@@ -23,18 +23,16 @@ Set VSCode to use built-in TypeScript version
 <!--
 
 todo:
-timers for periods need to be lined up
-see if ts import helpers do anything (tslib) (size-wise)
-qr code support
-handle wrong password input
+test qr code support
+
 handle settings updates:
   progressBarStyle
 steam account support
 Hide tokens during initial render (to avoid flicker)
 keyboard navigation (& esc to close any dialog)
+fuzzy search functionality
 data sync with WebRTC
 icons specific for issuer
-fuzzy search functionality
 Dran'n'Drop QR code image & config, backup files
 reconsider usage of vue-qrcode-reader
   It does not allow to use Screen Capture API (idk why it's not supported rn)
@@ -55,6 +53,7 @@ tokens should use single setInterval/setTimeout for each period (minor performan
 ? copy code to clipboard on `url/id` open
 
 done:
+handle wrong password input
 handle settings updates:
   passwordKeepAlive
   theme

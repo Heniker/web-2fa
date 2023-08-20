@@ -2,7 +2,6 @@
   "extends": "@vue/tsconfig/tsconfig.dom.json",
   "compilerOptions": {
     "allowJs": false,
-    "importHelpers": true,
     "noImplicitOverride": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitAny": true,

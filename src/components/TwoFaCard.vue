@@ -16,7 +16,7 @@
         v-show="isCopyNotification"
         :class="$style.codeCopyNotification"
         class="justify-center align-center"
-        elevation="20"
+        elevation="2"
         rounded
         color="grey-lighten-4"
       >

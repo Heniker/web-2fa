@@ -41,25 +41,41 @@ export class Otp {
     tokens.forEach((it) => this.setupToken(it))
   }
 
+  private timers: Record<number, () => void> = {}
+
   @serviceUntilInject()
-  private setupToken(_: TokenI) {
+  private async setupToken(_: TokenI) {
     const tokenRef = v.toRef(_)
     this.reactive.tokens.push(tokenRef.value)
 
     const token = tokenRef.value
 
-    const makeTimer = async () => {
+    const savedVal =
+      this.timers[token.period] ||
+      (() => {
+        const timeRemeaining = this.getRemainingTime(token)
+        const fn = this.timers[token.period]
+        assert(fn) // cant happen
+
+        // #todo>
+        // isEdge check forces this function to reactivate many times when it is close to finishing
+        // currently I have no idea how to implement proper timers in Edge browser
+        setTimeout(fn, isEdge ? timeRemeaining - 700 : timeRemeaining)
+      })
+
+    const genCode = async () => {
       const code = await this.generateCodeFor(token)
       this.reactive.codes[token.id] = code
-
-      const timeRemeaining = this.getRemainingTime(token)
-
-      // isEdge check forces this function to reactivate many times when it is close to finishing
-      // welp, I've tried to make things right
-      setTimeout(makeTimer, isEdge ? timeRemeaining - 700 : timeRemeaining)
     }
 
-    makeTimer()
+    this.timers[token.period] || queueMicrotask(savedVal)
+
+    this.timers[token.period] = async () => {
+      await genCode()
+      savedVal?.()
+    }
+
+    await genCode()
   }
 
   @serviceUntilInject()
@@ -111,8 +127,6 @@ export class Otp {
 
   /**
    * Remaining cycle time in ms
-   *
-   * #todo?> cache
    */
   getRemainingTime(token: TokenI) {
     return token.period * 1000 - (Date.now() % (token.period * 1000))

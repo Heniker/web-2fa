@@ -3,11 +3,12 @@ import * as v from 'vue'
 import { VCard, VSnackbar } from 'vuetify/components'
 
 // this module is required because VSnackbar won't be persisted if parent component unmounts
+// also VSnackbar will stack on top of each other why
 
 type VSnackbarInstance = InstanceType<typeof VSnackbar>
 type VSnackbarProps = VSnackbarInstance['$props']
-type VSnackbarEmits = VSnackbarInstance['$emit']
-type VSnackbarSlots = VSnackbarInstance['$slots']
+// type VSnackbarEmits = VSnackbarInstance['$emit']
+// type VSnackbarSlots = VSnackbarInstance['$slots']
 
 type ItemInfo = { instance: v.ComponentInternalInstance; effectScope: v.EffectScope }
 

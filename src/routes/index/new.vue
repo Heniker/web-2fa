@@ -90,7 +90,7 @@
               <v-col>
                 <v-text-field
                   label="Code size"
-                  v-model.number="token.codeLen"
+                  v-model.number="token.digits"
                   hide-details
                   type="number"
                 />
@@ -116,14 +116,13 @@ export default v.defineComponent({
     const otpService = v.inject(Otp.token)
     assert(otpService)
 
-    const token: v.Ref<TokenI> = v.ref({
+    const token = v.ref<TokenI>({
       id: nanoid(),
       label: '',
-      description: '',
+      issuer: '',
       period: 30,
       algorithm: 'SHA1',
-      codeLen: 6,
-      code: '',
+      digits: 6,
     })
 
     const tokenSecret = v.ref('')

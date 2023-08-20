@@ -91,7 +91,7 @@ export default v.defineComponent({
     const forceAnimationUpdate = v.ref(false)
 
     watchOnce(dndEl, () => {
-      useDraggable<UseDraggableReturn>(dndEl, tokens, {
+      useDraggable<UseDraggableReturn>(dndEl as any, tokens, {
         emptyInsertThreshold: 0,
         animation: 150,
         handle: '.hack_selector-drag',
@@ -99,7 +99,7 @@ export default v.defineComponent({
           forceAnimationUpdate.value = true
           queueMicrotask(() => (forceAnimationUpdate.value = false))
         },
-      })
+      } as any)
     })
 
     const isSideBarOpen = v.ref(false)

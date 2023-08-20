@@ -33,7 +33,7 @@
               v-model="appProgressBar.selected.value"
               :items="appProgressBar.options"
               class="mt-3"
-              label="Progress style"
+              label="Progress bar style"
               variant="solo-filled"
               hide-details
             ></v-select>
