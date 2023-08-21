@@ -20271,12 +20271,12 @@ textarea.v-field__input::placeholder {
 }
 
 
-.fade-enter-active[data-v-29485d94],
-.fade-leave-active[data-v-29485d94] {
+.fade-enter-active[data-v-88edd1d4],
+.fade-leave-active[data-v-88edd1d4] {
   transition: opacity 0.2s ease-in-out;
 }
-.fade-enter-from[data-v-29485d94],
-.fade-leave-to[data-v-29485d94] {
+.fade-enter-from[data-v-88edd1d4],
+.fade-leave-to[data-v-88edd1d4] {
   opacity: 0;
 }
 
@@ -20313,20 +20313,20 @@ textarea.v-field__input::placeholder {
 }
 
 
-.test[data-v-6e60418e] {
+.test[data-v-25c45992] {
   /* box-shadow: 0px 0px 4px 0px rgb(var(--v-theme-background)); */
 }
-.sortable-chosen[data-v-6e60418e] {
+.sortable-chosen[data-v-25c45992] {
   /* visibility: hidden !important; */
 }
-[data-v-6e60418e] .v-field * {
+[data-v-25c45992] .v-field * {
   /* letter-spacing: 1px; */
   /* font-size: 30px; */
   /* --v-input-padding-top: 2px;
   --v-field-padding-start: 12px;
   --v-input-control-height: 60px; */
 }
-[data-v-6e60418e] .v-label {
+[data-v-25c45992] .v-label {
   /* font-size: 17px; */
 }
 
@@ -20615,3 +20615,5 @@ textarea.v-field__input::placeholder {
   --v-layout-top: 0px;
   --v-layout-bottom: 0px;
 }
+
+/*# sourceMappingURL=main.css.map*/
