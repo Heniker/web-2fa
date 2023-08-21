@@ -1,5 +1,6 @@
 import { VuetifyPlugin } from 'webpack-plugin-vuetify'
 import { VueLoaderPlugin } from 'vue-loader'
+import TerserPlugin from 'terser-webpack-plugin'
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
@@ -28,7 +29,7 @@ export default async (_, argv) => {
    */
   const result = {
     /** `eval-source-map` slows down initial page load by a lot and does not seem worth it in the end */
-    devtool: isDev ? 'source-map' : false,
+    devtool: isDev ? 'source-map' : 'source-map',
     resolve: {
       modules: ['node_modules', '.'],
       alias: {
@@ -40,6 +41,17 @@ export default async (_, argv) => {
     },
     optimization: {
       moduleIds: 'deterministic',
+      minimizer: [
+        new TerserPlugin({
+          parallel: true,
+          terserOptions: {
+            ecma: 2016,
+            keep_classnames: false,
+            module: true,
+            // https://github.com/webpack-contrib/terser-webpack-plugin#terseroptions
+          },
+        }),
+      ],
     },
     module: {
       rules: [
@@ -120,7 +132,7 @@ export default async (_, argv) => {
             new webpack.IgnorePlugin({
               resourceRegExp: /\.test|spec\./,
             }),
-            new BundleAnalyzerPlugin(),
+            // new BundleAnalyzerPlugin(),
             new MiniCssExtractPlugin(),
           ]),
       new webpack.DefinePlugin({
@@ -136,7 +148,7 @@ export default async (_, argv) => {
         'process.version': JSON.stringify(process.version),
         'process.stderr': JSON.stringify(false), // https://github.com/browserify/commonjs-assert/issues/55
 
-        publicPath: JSON.stringify(publicPath), // https://github.com/browserify/commonjs-assert/issues/55
+        publicPath: JSON.stringify(publicPath),
       }),
       new VueLoaderPlugin(),
       new VuetifyPlugin({}),

@@ -41,9 +41,6 @@ translations?
 show global timer if all tokens are of same period
 Add visual tracking to qr detection
 
-See if Sortable is better for list reordering
-https://github.com/SortableJS/Sortable
-https://vueuse.org/integrations/useSortable
 
 add aria attributes to buttons, imgs, etc
 move otpauth to different lazy chunk, maybe allow Services to be lazy-loaded
@@ -61,6 +58,12 @@ copy code on click
 toggle show password should remember cursor position
 DnD
 ? simple editing on mobile
+
+See if Sortable is better for list reordering
+https://github.com/SortableJS/Sortable
+https://vueuse.org/integrations/useSortable
+
+
 
 edge messes up timers even when page is visible. user has to make clicks on page for it not to throttle
 this makes animation timings wrong. Also token's code generation can be delayed by up to 1 second

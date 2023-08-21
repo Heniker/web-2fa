@@ -50,16 +50,11 @@
 
 <script lang="ts">
 import * as v from 'vue'
-import * as otp from 'otpauth'
 import { mdiReorderHorizontal, mdiPlus, mdiQrcodeScan, mdiPlusBoxMultiple } from '@mdi/js'
-import { useDisplay } from 'vuetify'
-import * as vuetifyComponents from 'vuetify/components'
 import { onClickOutside, watchOnce } from '@vueuse/core'
 import TwoFaCard from '@/components/TwoFaCard.vue'
 import { Otp, Security } from '@/services'
-import { isResolved } from '@/util'
-import { useRouter, onBeforeRouteUpdate } from 'vue-router'
-import { useDraggable, type UseDraggableReturn } from 'vue-draggable-plus'
+import { useSortable } from '@vueuse/integrations/useSortable'
 
 const Sidebar = v.defineAsyncComponent(
   () =>
@@ -91,15 +86,15 @@ export default v.defineComponent({
     const forceAnimationUpdate = v.ref(false)
 
     watchOnce(dndEl, () => {
-      useDraggable<UseDraggableReturn>(dndEl as any, tokens, {
-        emptyInsertThreshold: 0,
-        animation: 150,
+      useSortable(dndEl as any, tokens, {
         handle: '.hack_selector-drag',
+        animation: 150,
+        emptyInsertThreshold: 0,
         onEnd() {
           forceAnimationUpdate.value = true
           queueMicrotask(() => (forceAnimationUpdate.value = false))
         },
-      } as any)
+      })
     })
 
     const isSideBarOpen = v.ref(false)

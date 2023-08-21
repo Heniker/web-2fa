@@ -192,15 +192,15 @@ function useTransitionValue(token: TokenI) {
 
   const visibility = useDocumentVisibility()
 
-  const forcedUpdate = (swapDirection = false) => {
+  const forcedUpdate = (swapDirection: boolean) => {
     requestAnimationFrame(() => {
-      firstFrame()
+      firstFrame(swapDirection)
       requestAnimationFrame(nextFrame)
     })
 
     const time = otpService.getRemainingTime(token)
 
-    function firstFrame() {
+    function firstFrame(swapDirection: boolean) {
       transitionDuration.value = 0
       swapDirection && (transitionDirection.value = Number(!transitionDirection.value))
       transitionState.value = transitionDirection.value
@@ -229,11 +229,11 @@ function useTransitionValue(token: TokenI) {
   // instead calls are throttled to when page becomes active & dispatched all at once
   // this is not the desired behavior, as that can mess up animation, so watch is paused when page is hidden
   v.watch(visibility, (arg) => {
-    arg === 'visible' && (forcedUpdate(), watchControls.resume())
+    arg === 'visible' && (forcedUpdate(false), watchControls.resume())
     arg === 'hidden' && watchControls.pause()
   })
 
-  forcedUpdate()
+  forcedUpdate(false)
 
   return { transitionState, transitionDuration, transitionDirection, forcedUpdate }
 }
