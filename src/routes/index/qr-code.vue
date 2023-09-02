@@ -98,7 +98,7 @@ export default v.defineComponent({
     navigator.mediaDevices
       .enumerateDevices()
       .then((it) => it.filter(({ kind }) => kind === 'videoinput'))
-      // idk why it is required. mby vuetify does something weird
+      // idk why JSON.parse(JSON.stringify) is required. mby vuetify does something weird
       .then((it) => JSON.parse(JSON.stringify(it)))
       .then((it) => {
         videoDevices.value.push(...it)
@@ -173,6 +173,5 @@ export default v.defineComponent({
 .qrStream video {
   max-height: 60vh;
   max-width: 80vw;
-  /* transform: scale(0.2); */
 }
 </style>

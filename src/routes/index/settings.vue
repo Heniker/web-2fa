@@ -66,8 +66,6 @@ export default v.defineComponent({
     const settingsService = v.inject(Settings.token)
     assert(settingsService)
 
-    const theme = useTheme()
-
     const appLockTime = {
       selected: v.toRefs(settingsService.reactive).passwordKeepAlive,
       options: [

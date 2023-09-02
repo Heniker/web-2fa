@@ -1,7 +1,8 @@
 {
   "type": "module",
   "scripts": {
-    "build": "vue-tsc --noEmit && webpack ./src/main.ts --mode=production",
+    "build": "vue-tsc --noEmit && webpack ./src/main.ts --mode production",
+    "build:pages": "vue-tsc --noEmit && webpack ./src/main.ts --mode production --env BUILD_PAGES",
     "dev": "webpack serve ./src/main.ts --mode=development",
     "serve": "npm run dev"
   },

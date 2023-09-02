@@ -90,7 +90,7 @@ app.use(
     getName: (path) => String(weakContext.resolve(path)),
   })
 
-  const router = Router.createRouter({ routes, history: Router.createWebHistory(publicPath) })
+  const router = Router.createRouter({ routes, history: Router.createWebHistory(PUBLIC_PATH) })
   app.use(router)
 }
 

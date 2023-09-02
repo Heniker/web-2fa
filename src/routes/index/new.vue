@@ -22,7 +22,7 @@
               v-model="token.issuer"
               aria-autocomplete="none"
               class="mt-3"
-              label="Description (issuer)"
+              label="Description (Issuer)"
               hide-details
             ></v-text-field>
             <v-text-field
@@ -116,14 +116,9 @@ export default v.defineComponent({
     const otpService = v.inject(Otp.token)
     assert(otpService)
 
-    const token = v.ref<TokenI>({
-      id: nanoid(),
-      label: '',
-      issuer: '',
-      period: 30,
-      algorithm: 'SHA1',
-      digits: 6,
-    })
+    const token = v.ref(
+      Otp.formToken({ label: '', issuer: '', period: 30, algorithm: 'SHA1', digits: 6 })
+    )
 
     const tokenSecret = v.ref('')
 

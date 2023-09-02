@@ -9,6 +9,13 @@
       elevation="0"
       @click="isSideBarOpen = !isSideBarOpen"
     ></v-app-bar-nav-icon>
+
+    <Progress
+      v-if="globalProgressBar"
+      :period="globalProgressBar"
+      :class="$style.progressBar"
+    ></Progress>
+
     <Teleport to="#app-bottom-portal" :disabled="!display.smAndDown">
       <section
         :class="
@@ -41,7 +48,10 @@
   <v-container v-if="isContextSetUp" fluid>
     <v-row ref="dndEl">
       <v-col cols="12" md="6" lg="4" xl="3" v-for="token in tokens" :key="token.id">
-        <TwoFaCard :token="token" :forceAnimationUpdate="forceAnimationUpdate"></TwoFaCard>
+        <TwoFaCard
+          :token="token"
+          :animationUpdateTrigger="animationUpdateTrigger(token).value"
+        ></TwoFaCard>
       </v-col>
     </v-row>
   </v-container>
@@ -53,8 +63,12 @@ import * as v from 'vue'
 import { mdiReorderHorizontal, mdiPlus, mdiQrcodeScan, mdiPlusBoxMultiple } from '@mdi/js'
 import { onClickOutside, watchOnce } from '@vueuse/core'
 import TwoFaCard from '@/components/TwoFaCard.vue'
-import { Otp, Security } from '@/services'
+import { Otp, Security, Settings, State } from '@/services'
 import { useSortable } from '@vueuse/integrations/useSortable'
+import { makePersist, persist, trigger } from '@/util'
+import Progress from '@/components/Progress.vue'
+import type { TokenI } from '@/_types'
+import { eagerComputed } from '@vueuse/core'
 
 const Sidebar = v.defineAsyncComponent(
   () =>
@@ -69,6 +83,7 @@ export const isSideBarOpenKey = Symbol() as v.InjectionKey<v.Ref<boolean>>
 export default v.defineComponent({
   components: {
     TwoFaCard,
+    Progress,
     Sidebar,
   },
 
@@ -77,37 +92,45 @@ export default v.defineComponent({
     assert(otpService)
     const securityService = v.inject(Security.token)
     assert(securityService)
+    const settingsService = v.inject(Settings.token)
+    assert(settingsService)
+    const state = v.inject(State.token)
+    assert(state)
 
     const isAdding = v.ref(true)
-    const tokens = v.toRefs(otpService.reactive).tokens
+    const tokens = v.toRef(() => otpService.reactive.tokens)
     const isContextSetUp = v.computed(() => securityService.reactive.isContextSetUp)
     const dndEl = v.ref() as v.Ref<Element>
 
-    const forceAnimationUpdate = v.ref(false)
+    const animationUpdateTrigger = makePersist<[TokenI], v.Ref<boolean>>(() => v.ref(false))
 
     watchOnce(dndEl, () => {
       useSortable(dndEl as any, tokens, {
         handle: '.hack_selector-drag',
         animation: 150,
         emptyInsertThreshold: 0,
-        onEnd() {
-          forceAnimationUpdate.value = true
-          queueMicrotask(() => (forceAnimationUpdate.value = false))
+
+        async onEnd(event: any) {
+          await v.nextTick()
+
+          const token = tokens.value[event.newIndex]
+          assert(token)
+
+          trigger(animationUpdateTrigger(token))
         },
       })
     })
 
-    const isSideBarOpen = v.ref(false)
-    v.provide(isSideBarOpenKey, isSideBarOpen)
-
     return {
       dndEl,
 
-      isSideBarOpen,
-      forceAnimationUpdate,
+      globalProgressBar: v.toRef(() => state.reactive.globalProgressBar),
+      isSideBarOpen: v.toRefs(state.reactive).isSideBarOpen,
       tokens,
       isContextSetUp,
       isAdding,
+
+      animationUpdateTrigger,
 
       mdiReorderHorizontal,
       mdiPlus,
@@ -138,12 +161,22 @@ export default v.defineComponent({
 :deep(.v-label) {
   /* font-size: 17px; */
 }
+
+* {
+  overflow: visible !important;
+}
 </style>
 
 <style module>
 .mobileButtons {
   position: fixed;
   bottom: 0px;
+}
+
+.progressBar {
+  position: absolute;
+  bottom: -6px;
+  left: 0px;
   right: 0px;
 }
 </style>

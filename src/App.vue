@@ -1,6 +1,6 @@
 <template>
   <v-app :class="$style.main">
-    <v-app-bar>
+    <v-app-bar :class="$style.appBar">
       <v-container fluid class="d-flex">
         <!--
           The order of stuff teleported here should be controlled with css flex order property
@@ -126,10 +126,8 @@ export default v.defineComponent({
   /* transform-origin: top center; */
 }
 
-@keyframes show {
-  100% {
-    transform: none;
-  }
+.appBar {
+  overflow: visible;
 }
 </style>
 

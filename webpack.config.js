@@ -5,11 +5,14 @@ import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 import webpack from 'webpack'
-import path from 'path'
 
 /**
  * @typedef {object} EnvT
  * @property {boolean} WEBPACK_SERVE
+ * @property {boolean} WEBPACK_BUNDLE
+ * @property {boolean} WEBPACK_BUIlD
+ *
+ * @property {boolean} BUILD_PAGES
  */
 
 /**
@@ -18,17 +21,18 @@ import path from 'path'
  * @param {{entry: string[], mode: string, env: EnvT}} argv
  */
 export default async (_, argv) => {
-  const htmlTemplate = './public/index.html'
-  const publicPath = '/'
-
   const isDev = argv.mode === 'development'
   const isServe = !!argv.env.WEBPACK_SERVE
+  const isBuildPages = !!argv.env.BUILD_PAGES
+
+  const htmlTemplate = './public/index.html'
+  const publicPath = isBuildPages ? '/web-2fa/' : '/'
+  const htmlFileName = isBuildPages ? '404.html' : 'index.html'
 
   /**
    * @type {import('webpack').Configuration & {devServer: any}}
    */
   const result = {
-    /** `eval-source-map` slows down initial page load by a lot and does not seem worth it in the end */
     devtool: isDev ? 'source-map' : 'source-map',
     resolve: {
       modules: ['node_modules', '.'],
@@ -132,7 +136,7 @@ export default async (_, argv) => {
             new webpack.IgnorePlugin({
               resourceRegExp: /\.test|spec\./,
             }),
-            // new BundleAnalyzerPlugin(),
+            new BundleAnalyzerPlugin(),
             new MiniCssExtractPlugin(),
           ]),
       new webpack.DefinePlugin({
@@ -148,11 +152,12 @@ export default async (_, argv) => {
         'process.version': JSON.stringify(process.version),
         'process.stderr': JSON.stringify(false), // https://github.com/browserify/commonjs-assert/issues/55
 
-        publicPath: JSON.stringify(publicPath),
+        PUBLIC_PATH: JSON.stringify(publicPath),
       }),
       new VueLoaderPlugin(),
       new VuetifyPlugin({}),
       new HtmlWebpackPlugin({
+        filename: htmlFileName,
         template: htmlTemplate,
       }),
     ],

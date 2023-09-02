@@ -11,7 +11,7 @@
     @click.right.prevent="() => isEdit || (isEdit = true)"
     @contextmenu.prevent
   >
-    <Transition v-if="!isEdit" :css="!preferLessAnimations" name="fade" mode="out-in">
+    <Transition v-if="!isEdit" :name="preferLessAnimations ? '' : 'fade'" mode="out-in">
       <v-sheet
         v-show="isCopyNotification"
         :class="$style.codeCopyNotification"
@@ -54,8 +54,8 @@
             <span>{{ token.issuer || '&shy;' }}</span>
           </v-card-subtitle>
           <v-card-text class="d-flex">
-            <Transition name="fade" :css="!preferLessAnimations" mode="out-in">
-              <span :key="displayCode" class="my-auto text-h3">
+            <Transition :name="preferLessAnimations ? '' : 'fade'" mode="out-in">
+              <span :key="displayCode" class="my-auto text-h3" v-if="displayCode">
                 {{
                   displayCode.length === 6
                     ? displayCode.slice(0, 3) + displayCode.slice(3)
@@ -68,7 +68,7 @@
       </div>
 
       <div v-if="isEdit" class="d-flex flex-column align-center justify-space-around ma-3 ml-0">
-        <!-- I am not sure if this is visually obvious enough to be a drag target -->
+        <!-- #todo?> I am not sure if this is visually obvious enough to be a drag target -->
         <v-avatar :class="$style.cursorGrab" class="hack_selector-drag" size="60">
           <v-icon size="60" :icon="mdiDragVariant"></v-icon>
         </v-avatar>
@@ -83,41 +83,28 @@
       </v-avatar>
     </div>
   </v-card>
-  <div
-    :style="{
-      transform: `scaleX(${transitionState})`,
-      transitionDuration: `${transitionDuration}ms`,
-      transformOrigin: transitionDirection ? 'left' : 'right',
-    }"
-    :class="$style.progressbar"
-    class="bg-deep-purple-darken-3"
-  ></div>
+  <Progress
+    v-if="!globalProgressBar"
+    ref="progressEl"
+    :period="token.period"
+    :updateTrigger="animationUpdateTrigger"
+  ></Progress>
 </template>
 
 <script lang="ts">
 import * as v from 'vue'
-import * as otp from 'otpauth'
 import { mdiDragVariant } from '@mdi/js'
-import { Ripple } from 'vuetify/directives'
-import {
-  computedEager,
-  onClickOutside,
-  useTransition,
-  useCurrentElement,
-  whenever,
-  useAnimate,
-  type MaybeElement,
-  useDocumentVisibility,
-  onLongPress,
-  watchPausable,
-} from '@vueuse/core'
+import { whenever } from '@vueuse/core'
 import { vOnLongPress } from '@vueuse/components'
 import { seededRandom } from '../util'
 import type { TokenI } from '@/_types'
-import { Otp, Settings } from '@/services'
+import { Otp, Settings, State } from '@/services'
+import Progress from '@/components/Progress.vue'
 
 export default v.defineComponent({
-  components: {},
+  components: {
+    Progress,
+  },
 
   directives: {
     'long-press': vOnLongPress,
@@ -125,7 +112,7 @@ export default v.defineComponent({
 
   props: {
     token: { type: Object as v.PropType<TokenI>, required: true },
-    forceAnimationUpdate: { type: Boolean },
+    animationUpdateTrigger: { type: Boolean, required: true },
   },
 
   setup(props, ctx) {
@@ -133,9 +120,10 @@ export default v.defineComponent({
     assert(otpService)
     const settingsService = v.inject(Settings.token)
     assert(settingsService)
+    const state = v.inject(State.token)
+    assert(state)
 
     const displayCode = v.ref(v.computed(() => otpService.reactive.codes[props.token.id] || ''))
-
     const isEdit = v.ref(false)
 
     const isCopyNotification = v.ref(false)
@@ -151,20 +139,18 @@ export default v.defineComponent({
       }, 1200)
     }
 
-    // custom transition is used instead of animations API because it turns out to be MUCH more cpu-efficient
-    const { transitionDuration, transitionState, transitionDirection, forcedUpdate } =
-      useTransitionValue(props.token)
+    const progressEl = v.ref<InstanceType<typeof import('@/components/Progress.vue').default>>()
 
     whenever(
-      () => props.forceAnimationUpdate,
-      () => forcedUpdate(false)
+      v.toRef(() => props.animationUpdateTrigger),
+      () => progressEl.value?.forcedUpdate(false)
     )
 
     return {
+      progressEl,
+
+      globalProgressBar: v.toRef(() => state.reactive.globalProgressBar),
       isCopyNotification,
-      transitionDirection,
-      transitionDuration,
-      transitionState,
       displayCode,
 
       isEdit,
@@ -181,62 +167,6 @@ export default v.defineComponent({
     }
   },
 })
-
-function useTransitionValue(token: TokenI) {
-  const otpService = v.inject(Otp.token) as Otp
-  assert(otpService)
-
-  const transitionDuration = v.ref(0)
-  const transitionDirection = v.ref(0 as 0 | 1)
-  const transitionState = v.ref(0)
-
-  const visibility = useDocumentVisibility()
-
-  const forcedUpdate = (swapDirection: boolean) => {
-    requestAnimationFrame(() => {
-      firstFrame(swapDirection)
-      requestAnimationFrame(nextFrame)
-    })
-
-    const time = otpService.getRemainingTime(token)
-
-    function firstFrame(swapDirection: boolean) {
-      transitionDuration.value = 0
-      swapDirection && (transitionDirection.value = Number(!transitionDirection.value))
-      transitionState.value = transitionDirection.value
-        ? (token.period - time / 1000) / token.period // close to 0 when period starts
-        : time / 1000 / token.period // close to 1 when period starts
-    }
-
-    function nextFrame() {
-      transitionDuration.value = time
-      transitionState.value = transitionDirection.value ? 1 : 0
-    }
-  }
-
-  const watchControls = watchPausable(
-    v.toRef(() => otpService.reactive.codes[token.id]),
-    (current, previous) => {
-      if (!previous) {
-        return
-      }
-
-      forcedUpdate(true)
-    }
-  )
-
-  // browsers do not call requestAnimationFrame cb when page is not visible
-  // instead calls are throttled to when page becomes active & dispatched all at once
-  // this is not the desired behavior, as that can mess up animation, so watch is paused when page is hidden
-  v.watch(visibility, (arg) => {
-    arg === 'visible' && (forcedUpdate(false), watchControls.resume())
-    arg === 'hidden' && watchControls.pause()
-  })
-
-  forcedUpdate(false)
-
-  return { transitionState, transitionDuration, transitionDirection, forcedUpdate }
-}
 
 function getColorForString(str: string) {
   // gpt3 said these colors are nice
@@ -278,13 +208,6 @@ function getColorForString(str: string) {
 <style module>
 .root :global(.v-label.v-field-label.v-field-label--floating) {
   top: 3px;
-}
-
-.progressbar {
-  transition-timing-function: linear;
-  margin-top: -3px;
-  height: 3px;
-  width: 100%;
 }
 
 .codeCopyNotification {

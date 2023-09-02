@@ -20,6 +20,13 @@ export class Otp {
     } as TokenI
   }
 
+  /**
+   * Remaining cycle time in ms
+   */
+  static getRemainingTime(period: number) {
+    return period * 1000 - (Date.now() % (period * 1000))
+  }
+
   @appInject(PersistentStorage.token)
   private accessor persistentStorage!: PersistentStorage
 
@@ -50,32 +57,11 @@ export class Otp {
 
     const token = tokenRef.value
 
-    const savedVal =
-      this.timers[token.period] ||
-      (() => {
-        const timeRemeaining = this.getRemainingTime(token)
-        const fn = this.timers[token.period]
-        assert(fn) // cant happen
+    this.reactive.codes[token.id] = await this.generateCodeFor(token)
 
-        // #todo>
-        // isEdge check forces this function to reactivate many times when it is close to finishing
-        // currently I have no idea how to implement proper timers in Edge browser
-        setTimeout(fn, isEdge ? timeRemeaining - 700 : timeRemeaining)
-      })
-
-    const genCode = async () => {
-      const code = await this.generateCodeFor(token)
-      this.reactive.codes[token.id] = code
-    }
-
-    this.timers[token.period] || queueMicrotask(savedVal)
-
-    this.timers[token.period] = async () => {
-      await genCode()
-      savedVal?.()
-    }
-
-    await genCode()
+    this.eachPeriod(token.period, async () => {
+      this.reactive.codes[token.id] = await this.generateCodeFor(token)
+    })
   }
 
   @serviceUntilInject()
@@ -109,6 +95,7 @@ export class Otp {
     await this.fetchStoredTokens()
 
     // this is not a perfect solution, but better than alternatives
+    // #todo?> could delay saving tokens until vue nextTick, which would make more sense
     watchDebounced(
       v.toRef(() => this.reactive.tokens),
       async () => {
@@ -125,11 +112,25 @@ export class Otp {
     )
   }
 
-  /**
-   * Remaining cycle time in ms
-   */
-  getRemainingTime(token: TokenI) {
-    return token.period * 1000 - (Date.now() % (token.period * 1000))
+  eachPeriod(period: number, action: () => void) {
+    const prev =
+      this.timers[period] ||
+      (() => {
+        const fn = this.timers[period]
+        assert(fn)
+
+        setTimeout(fn, Otp.getRemainingTime(period))
+      })
+
+    let isCancelled = false
+
+    this.timers[period] || queueMicrotask(prev)
+    this.timers[period] = () => {
+      prev()
+      isCancelled || action()
+    }
+
+    return () => (isCancelled = true)
   }
 
   @serviceUntilInit()

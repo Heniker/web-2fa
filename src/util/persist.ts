@@ -3,8 +3,8 @@ const persistKey = {}
 
 /**
  * Last argument is always value to be persisted
- * can be used as a convinence to avoid closures or for simple debugging
- * do not use it though, as it's extremely easy to get wrong
+ * can be used as a convinence to avoid closures or to attach metadata to object
+ * do not use it though, as it's rather easy to get wrong
  */
 export const persist = (...args: [...any[]]) => {
   const lastArg = args.at(-1)
@@ -30,15 +30,27 @@ export const persist = (...args: [...any[]]) => {
   }
 
   currentMap.set(persistKey, lastArg)
-  return undefined
 }
 
 /**
  * Somewhat typed version of persist
+ * Optional argument allows providing default value that will be initiated on first call
+ * When using optional argument, `undefined` will never be returned
  */
-export const makePersist = <T extends readonly object[], R extends unknown>() => {
+export const makePersist = <T extends readonly object[], R extends unknown>(
+  makeDefaultVal?: () => R
+) => {
   const localPersistKey = {}
+
   return <J extends R | void = void>(...args: [...T, J?]): J extends R ? void : R => {
-    return persist(localPersistKey, ...args)
+    const result = persist(localPersistKey, ...args)
+
+    if (result === undefined && makeDefaultVal) {
+      const defaultVal = makeDefaultVal()
+      persist(localPersistKey, ...args, defaultVal)
+      return defaultVal as any
+    }
+
+    return result
   }
 }

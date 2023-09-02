@@ -23,24 +23,21 @@ Set VSCode to use built-in TypeScript version
 <!--
 
 todo:
-test qr code support
+test qr code support on mobile
 
-handle settings updates:
-  progressBarStyle
 steam account support
-Hide tokens during initial render (to avoid flicker)
+? Hide tokens during initial render (to avoid flicker with reduced animations setting)
 keyboard navigation (& esc to close any dialog)
-fuzzy search functionality
+fuzzy search
 data sync with WebRTC
 icons specific for issuer
+backup files
 Dran'n'Drop QR code image & config, backup files
+qr scan from screen reader
 reconsider usage of vue-qrcode-reader
   It does not allow to use Screen Capture API (idk why it's not supported rn)
   It uses https://github.com/Sec-ant/barcode-detector under the hood, which does all the heavy lifting
 translations?
-show global timer if all tokens are of same period
-Add visual tracking to qr detection
-
 
 add aria attributes to buttons, imgs, etc
 move otpauth to different lazy chunk, maybe allow Services to be lazy-loaded
@@ -48,20 +45,21 @@ icons for accounts
 tokens should use single setInterval/setTimeout for each period (minor performance optimization)
 ? custom clock & time sync?
 ? copy code to clipboard on `url/id` open
+? Add visual tracking to qr detection
 
 done:
 handle wrong password input
 handle settings updates:
   passwordKeepAlive
   theme
+  progressBarStyle
 copy code on click
 toggle show password should remember cursor position
 DnD
 ? simple editing on mobile
-
 See if Sortable is better for list reordering
-https://github.com/SortableJS/Sortable
-https://vueuse.org/integrations/useSortable
+  https://github.com/SortableJS/Sortable
+  https://vueuse.org/integrations/useSortable
 
 
 

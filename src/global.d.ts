@@ -67,7 +67,7 @@ declare global {
   var isEdge: boolean
 
   /** Webpack's publicPath value */
-  var publicPath: string
+  var PUBLIC_PATH: string
 
   var _: any
 

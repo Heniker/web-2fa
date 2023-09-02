@@ -1,6 +1,7 @@
 export * as managedPromise from './managedPromise'
 export * from './persist'
 
+import { syncRef, until, whenever } from '@vueuse/core'
 import * as v from 'vue'
 
 export const isResolved = <T>(promise: PromiseLike<T>) => {
@@ -125,4 +126,42 @@ export const seededRandom = (seed: number) => {
   t = Math.imul(t ^ (t >>> 15), t | 1)
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+}
+
+export const trigger = async (arg: v.Ref<boolean>) => {
+  arg.value = true
+  await v.nextTick()
+  arg.value = false
+}
+
+/**
+ * Returns ref that turns true whenever argument ref changes
+ */
+export const useHasChanged = (
+  targetRef: v.Ref<unknown>,
+  resultRef: v.Ref<boolean> = v.ref(false)
+) => {
+  until(targetRef)
+    .changed()
+    .then(() => {
+      resultRef.value = true
+      useHasChanged(targetRef, resultRef)
+    })
+
+  return resultRef
+}
+
+/**
+ * Emit property change instead of changing property
+ */
+export const useEmitChange = <T>(prop: v.Ref<T>, emitName: string) => {
+  const instance = v.getCurrentInstance()
+  assert(instance)
+
+  return v.computed<T>({
+    get: () => prop.value,
+    set: (val) => {
+      instance.emit(emitName, val)
+    },
+  })
 }
