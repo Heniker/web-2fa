@@ -27,29 +27,26 @@ export default v.defineComponent({
     assert(state)
 
     const transition = useTransitionValue(v.toRef(() => props.period))
-    const cancelAutoUpdate = otpService.eachPeriod(props.period, () =>
-      transition.forcedUpdate(true)
-    )
+
+    v.onMounted(() => transition.forcedUpdate(false))
 
     v.watch(
       v.toRef(() => state.reactive.globalProgressBar),
-      (val) => {
-        if (val) {
-          transition.forcedUpdate(false)
-        } else {
-          transition.transitionState.value = 0
-        }
-      }
+      () => transition.forcedUpdate(false)
     )
 
-    v.onUnmounted(() => {
-      cancelAutoUpdate()
-    })
+    {
+      const cancelAutoUpdate = otpService.eachPeriod(props.period, () => {
+        transition.forcedUpdate(true)
+      })
 
-    transition.forcedUpdate(false)
+      v.onUnmounted(() => {
+        cancelAutoUpdate()
+      })
+    }
 
     ctx.expose({ forcedUpdate: transition.forcedUpdate })
-    return transition
+    return { ...transition }
   },
 })
 

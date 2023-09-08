@@ -82,13 +82,8 @@
         </span>
       </v-avatar>
     </div>
+    <Progress v-if="!globalProgressBar" ref="progressEl" :period="token.period"></Progress>
   </v-card>
-  <Progress
-    v-if="!globalProgressBar"
-    ref="progressEl"
-    :period="token.period"
-    :updateTrigger="animationUpdateTrigger"
-  ></Progress>
 </template>
 
 <script lang="ts">
@@ -112,7 +107,6 @@ export default v.defineComponent({
 
   props: {
     token: { type: Object as v.PropType<TokenI>, required: true },
-    animationUpdateTrigger: { type: Boolean, required: true },
   },
 
   setup(props, ctx) {
@@ -141,12 +135,17 @@ export default v.defineComponent({
 
     const progressEl = v.ref<InstanceType<typeof import('@/components/Progress.vue').default>>()
 
-    whenever(
-      v.toRef(() => props.animationUpdateTrigger),
-      () => progressEl.value?.forcedUpdate(false)
-    )
+    const forcedUpdate = (arg: boolean) => {
+      progressEl.value?.forcedUpdate(arg)
+    }
+
+    ctx.expose({
+      forcedUpdate,
+    })
 
     return {
+      forcedUpdate, // only for correct expose typing
+
       progressEl,
 
       globalProgressBar: v.toRef(() => state.reactive.globalProgressBar),
@@ -169,6 +168,10 @@ export default v.defineComponent({
 })
 
 function getColorForString(str: string) {
+  if (!str) {
+    return '#FFFFFF'
+  }
+
   // gpt3 said these colors are nice
   const colors = [
     '#FFFFFF',

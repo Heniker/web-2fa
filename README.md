@@ -22,22 +22,30 @@ Set VSCode to use built-in TypeScript version
 
 <!--
 
+notes:
+fuse.js otpauth vue-qrcode-reader
+should not be part of main bundle (use lazy-loading)
+
 todo:
 test qr code support on mobile
+test app with all permisions off
 
+handle wrong token secret
 steam account support
 ? Hide tokens during initial render (to avoid flicker with reduced animations setting)
 keyboard navigation (& esc to close any dialog)
-fuzzy search
 data sync with WebRTC
 icons specific for issuer
-backup files
+backup & restore to/from file
 Dran'n'Drop QR code image & config, backup files
 qr scan from screen reader
 reconsider usage of vue-qrcode-reader
   It does not allow to use Screen Capture API (idk why it's not supported rn)
   It uses https://github.com/Sec-ant/barcode-detector under the hood, which does all the heavy lifting
+remove teleport to appbar
 translations?
+disable progressbar during dragging
+notify user on invalid progressBarStyle setting change
 
 add aria attributes to buttons, imgs, etc
 move otpauth to different lazy chunk, maybe allow Services to be lazy-loaded
@@ -48,6 +56,7 @@ tokens should use single setInterval/setTimeout for each period (minor performan
 ? Add visual tracking to qr detection
 
 done:
+fuzzy search
 handle wrong password input
 handle settings updates:
   passwordKeepAlive

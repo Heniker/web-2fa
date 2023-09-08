@@ -1,12 +1,12 @@
 <template>
   <v-app :class="$style.main">
     <v-app-bar :class="$style.appBar">
-      <v-container fluid class="d-flex">
+      <v-container fluid class="d-flex align-center">
         <!--
           The order of stuff teleported here should be controlled with css flex order property
           Which is a bit hacky, but it's the simplest to understand and manage
          -->
-        <div id="app-bar-portal" :class="$style.portal"></div>
+        <div id="app-bar-portal" :class="[$style.portal, $style.appBar]"></div>
       </v-container>
     </v-app-bar>
 
@@ -16,7 +16,7 @@
   </v-app>
 
   <Teleport to="#app-bar-portal">
-    <span :class="$style.title" class="align-self-center">Web-2FA</span>
+    <span :class="[$style.title]">Web-2FA</span>
   </Teleport>
 
   <div id="app-overlay-portal" :class="$style.overlay"></div>
@@ -83,7 +83,7 @@ export default v.defineComponent({
   top: 50%;
   right: 50%;
   transform: translate(50%, -50%);
-  /* letter-spacing: 1px; */
+  letter-spacing: 1px;
   font-size: 38px;
   font-weight: 630;
 }
@@ -127,7 +127,7 @@ export default v.defineComponent({
 }
 
 .appBar {
-  overflow: visible;
+  overflow: visible !important;
 }
 </style>
 

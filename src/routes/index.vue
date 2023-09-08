@@ -4,11 +4,39 @@
     <v-app-bar-nav-icon
       :size="display.smAndDown ? 'large' : 'default'"
       :icon="mdiReorderHorizontal"
-      class="order-1 mr-auto"
+      class="order-1"
       aria-label="Open sidebar"
       elevation="0"
       @click="isSideBarOpen = !isSideBarOpen"
     ></v-app-bar-nav-icon>
+
+    <div class="order-11 d-flex ml-auto">
+      <ProvideValue :isOpen="false" v-slot="slot">
+        <v-expand-x-transition :disabled="preferLessAnimations">
+          <v-text-field
+            v-if="slot.isOpen"
+            v-model="filterQuery"
+            style="width: 250px"
+            placeholder="Search"
+            class="mr-3"
+            variant="filled"
+            density="compact"
+            single-line
+            hide-details
+            @keydown.esc=";(slot.isOpen = !slot.isOpen), (filterQuery = '')"
+          ></v-text-field>
+        </v-expand-x-transition>
+        <v-btn
+          :icon="slot.isOpen ? mdiClose : mdiMagnify"
+          :elevation="display.smAndDown ? 7 : 2"
+          class="mr-3"
+          aria-label="Toggle search bar"
+          color="deep-purple-darken-1"
+          variant="outlined"
+          @click=";(slot.isOpen = !slot.isOpen), (filterQuery = '')"
+        ></v-btn>
+      </ProvideValue>
+    </div>
 
     <Progress
       v-if="globalProgressBar"
@@ -48,10 +76,7 @@
   <v-container v-if="isContextSetUp" fluid>
     <v-row ref="dndEl">
       <v-col cols="12" md="6" lg="4" xl="3" v-for="token in tokens" :key="token.id">
-        <TwoFaCard
-          :token="token"
-          :animationUpdateTrigger="animationUpdateTrigger(token).value"
-        ></TwoFaCard>
+        <TwoFaCard ref="cardEls" :id="`card-${token.id}`" :token="token"></TwoFaCard>
       </v-col>
     </v-row>
   </v-container>
@@ -60,15 +85,23 @@
 
 <script lang="ts">
 import * as v from 'vue'
-import { mdiReorderHorizontal, mdiPlus, mdiQrcodeScan, mdiPlusBoxMultiple } from '@mdi/js'
+import {
+  mdiReorderHorizontal,
+  mdiPlus,
+  mdiQrcodeScan,
+  mdiPlusBoxMultiple,
+  mdiMagnify,
+  mdiClose,
+} from '@mdi/js'
 import { onClickOutside, watchOnce } from '@vueuse/core'
 import TwoFaCard from '@/components/TwoFaCard.vue'
 import { Otp, Security, Settings, State } from '@/services'
 import { useSortable } from '@vueuse/integrations/useSortable'
-import { makePersist, persist, trigger } from '@/util'
+import { ProvideValue, makePersist, persist, trigger } from '@/util'
 import Progress from '@/components/Progress.vue'
 import type { TokenI } from '@/_types'
 import { eagerComputed } from '@vueuse/core'
+import { computedAsync } from '@vueuse/core'
 
 const Sidebar = v.defineAsyncComponent(
   () =>
@@ -78,6 +111,8 @@ const Sidebar = v.defineAsyncComponent(
     )
 )
 
+const FuseImport = import(/* webpackPrefetch: true */ 'fuse.js')
+
 export const isSideBarOpenKey = Symbol() as v.InjectionKey<v.Ref<boolean>>
 
 export default v.defineComponent({
@@ -85,6 +120,7 @@ export default v.defineComponent({
     TwoFaCard,
     Progress,
     Sidebar,
+    ProvideValue,
   },
 
   setup() {
@@ -97,45 +133,79 @@ export default v.defineComponent({
     const state = v.inject(State.token)
     assert(state)
 
-    const isAdding = v.ref(true)
-    const tokens = v.toRef(() => otpService.reactive.tokens)
-    const isContextSetUp = v.computed(() => securityService.reactive.isContextSetUp)
-    const dndEl = v.ref() as v.Ref<Element>
+    const filterQuery = v.ref('')
 
-    const animationUpdateTrigger = makePersist<[TokenI], v.Ref<boolean>>(() => v.ref(false))
+    {
+      const searchTokens = async (arg: string) => {
+        const fuseInstance = FuseImport.then(
+          (it) => new it.default(otpService.reactive.tokens, { keys: ['label', 'issuer'] })
+        )
+
+        return (await fuseInstance).search(arg).map((it) => it.item)
+      }
+
+      var tokens = computedAsync(
+        async () =>
+          filterQuery.value && otpService.reactive.tokens
+            ? await searchTokens(filterQuery.value)
+            : otpService.reactive.tokens,
+        []
+      )
+    }
+
+    const dndEl = v.ref<Element>()
+    const cardEls = v.ref<InstanceType<typeof import('@/components/TwoFaCard.vue').default>[]>()
 
     watchOnce(dndEl, () => {
-      useSortable(dndEl as any, tokens, {
+      const st = useSortable(dndEl as any, tokens, {
         handle: '.hack_selector-drag',
         animation: 150,
         emptyInsertThreshold: 0,
+      })
 
-        async onEnd(event: any) {
-          await v.nextTick()
-
-          const token = tokens.value[event.newIndex]
-          assert(token)
-
-          trigger(animationUpdateTrigger(token))
-        },
+      v.watch(filterQuery, () => {
+        filterQuery.value ? st.option('disabled', true) : st.option('disabled', false)
       })
     })
 
+    {
+      let lastSearchResult: TokenI | undefined
+
+      v.watch(filterQuery, (val) => {
+        cardEls.value?.forEach((it) => {
+          it.forcedUpdate(false)
+        })
+
+        if (val) {
+          lastSearchResult = tokens.value[0]
+        } else {
+          v.nextTick(() => {
+            lastSearchResult &&
+              document.querySelector(`#card-${lastSearchResult.id}`)?.scrollIntoView()
+            lastSearchResult = undefined
+          })
+        }
+      })
+    }
+
     return {
       dndEl,
+      cardEls,
 
       globalProgressBar: v.toRef(() => state.reactive.globalProgressBar),
       isSideBarOpen: v.toRefs(state.reactive).isSideBarOpen,
       tokens,
-      isContextSetUp,
-      isAdding,
+      filterQuery,
+      isContextSetUp: v.toRef(() => securityService.reactive.isContextSetUp),
+      isAdding: v.ref(true),
+      preferLessAnimations: v.toRef(() => settingsService.reactive.preferLessAnimations),
 
-      animationUpdateTrigger,
-
+      mdiClose,
       mdiReorderHorizontal,
       mdiPlus,
       mdiQrcodeScan,
       mdiPlusBoxMultiple,
+      mdiMagnify,
     }
   },
 })
@@ -171,6 +241,7 @@ export default v.defineComponent({
 .mobileButtons {
   position: fixed;
   bottom: 0px;
+  right: 10px;
 }
 
 .progressBar {

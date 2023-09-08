@@ -115,16 +115,11 @@ export class Otp {
   eachPeriod(period: number, action: () => void) {
     const prev =
       this.timers[period] ||
-      (() => {
-        const fn = this.timers[period]
-        assert(fn)
-
-        setTimeout(fn, Otp.getRemainingTime(period))
-      })
-
-    let isCancelled = false
+      (() => setTimeout(() => this.timers[period]?.(), Otp.getRemainingTime(period)))
 
     this.timers[period] || queueMicrotask(prev)
+
+    let isCancelled = false
     this.timers[period] = () => {
       prev()
       isCancelled || action()

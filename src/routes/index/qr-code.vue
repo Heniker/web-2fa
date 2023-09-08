@@ -52,13 +52,9 @@
 <script lang="ts">
 import { isTokenAlgorithm } from '@/_types'
 import * as v from 'vue'
-import { URI as OtpUri } from 'otpauth'
 import { mdiEye, mdiEyeOff } from '@mdi/js'
-import { useDisplay } from 'vuetify'
 import { Otp, Security } from '@/services'
-import { ProvideValue } from '@/util'
 import { useRouter } from 'vue-router'
-import * as prop from 'vue-types'
 import { isSideBarOpenKey } from '../index.vue'
 import { Notification } from '@/components/Notification'
 
@@ -113,8 +109,10 @@ export default v.defineComponent({
     }
 
     const isSuccess = v.ref(false)
-    const onCodeDetect = (arg: [CodeScanResultI]) => {
-      const parsed = OtpUri.parse(arg[0].rawValue)
+    const onCodeDetect = async (arg: [CodeScanResultI]) => {
+      const otpUri = (await import('otpauth')).URI
+
+      const parsed = otpUri.parse(arg[0].rawValue)
       const algorithm = parsed.algorithm
 
       assert('period' in parsed)
