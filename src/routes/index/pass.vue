@@ -48,9 +48,9 @@
       </v-card>
     </section>
   </Teleport>
-  <v-snackbar v-model="isError" variant="tonal" color="red">
+  <SnackbarNotification v-model="isError" variant="tonal" color="red">
     <span class="text-h6 d-flex justify-center">Decryption Error</span>
-  </v-snackbar>
+  </SnackbarNotification>
 </template>
 
 <script lang="ts">
@@ -60,9 +60,10 @@ import { mdiEye, mdiEyeOff } from '@mdi/js'
 import { Otp, Security } from '@/services'
 import { ProvideValue } from '@/util'
 import { useRouter } from 'vue-router'
+import { SnackbarNotification } from '@/components/Notification'
 
 export default v.defineComponent({
-  components: { ProvideValue },
+  components: { ProvideValue, SnackbarNotification },
   setup(props, ctx) {
     const otpService = v.inject(Otp.token)
     assert(otpService)

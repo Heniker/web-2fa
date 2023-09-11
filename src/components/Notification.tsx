@@ -15,7 +15,7 @@ type ItemInfo = { instance: v.ComponentInternalInstance; effectScope: v.EffectSc
 // currently only 1 notification mount per app is allowed
 const appToItem = new WeakMap<v.App, ItemInfo[]>()
 
-export const Notification = v.defineComponent({
+export const SnackbarNotification = v.defineComponent({
   inheritAttrs: false,
 
   props: Object.keys(VSnackbar.props) as (keyof VSnackbarProps)[],
@@ -37,7 +37,7 @@ export const Notification = v.defineComponent({
   },
 })
 
-export const NotificationMount = v.defineComponent({
+export const SnackbarNotificationMount = v.defineComponent({
   setup() {
     const instance = v.getCurrentInstance()
     assert(instance)
@@ -65,11 +65,11 @@ export const NotificationMount = v.defineComponent({
     return () =>
       items.map((it, i) => (
         <VSnackbar
+          {...it.instance.props}
+          {...it.instance.attrs}
           style={{ visibility: i === 0 ? 'visible' : 'hidden' }}
           onVnodeMounted={() => initComponent(it)}
-          onUpdate:modelValue={(arg) => (it.instance.props['modelValue'] = arg)}
-          {...it.instance.props}
-          attach={(it.instance.props.attach as boolean) || false}
+          attach={'body'}
           v-slots={it.instance.slots}
         ></VSnackbar>
       ))

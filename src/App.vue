@@ -22,7 +22,7 @@
   <div id="app-overlay-portal" :class="$style.overlay"></div>
   <div id="app-bottom-portal" :class="$style.portal"></div>
 
-  <NotificationMount></NotificationMount>
+  <SnackbarNotificationMount></SnackbarNotificationMount>
 </template>
 
 <script lang="ts">
@@ -30,11 +30,11 @@ import * as v from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as services from '@/services'
 import { useTheme } from 'vuetify'
-import { NotificationMount } from '@/components/Notification'
+import { SnackbarNotificationMount } from '@/components/Notification'
 
 export default v.defineComponent({
   components: {
-    NotificationMount,
+    SnackbarNotificationMount,
   },
   setup() {
     const settingsService = v.inject(services.Settings.token)

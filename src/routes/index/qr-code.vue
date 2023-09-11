@@ -38,15 +38,15 @@
       </v-card>
     </section>
   </Teleport>
-  <Notification v-model="isError" variant="tonal" color="red">
+  <SnackbarNotification v-model="isError" variant="tonal" color="red">
     <div class="text-h6 d-flex flex-column justify-space-around align-center">
       <div>Something went wrong</div>
       <div>Check console for details</div>
     </div>
-  </Notification>
-  <Notification v-model="isSuccess" variant="tonal" color="green">
+  </SnackbarNotification>
+  <SnackbarNotification v-model="isSuccess" variant="tonal" color="green">
     <span class="text-h6 d-flex justify-center">Added entry from QR Code</span>
-  </Notification>
+  </SnackbarNotification>
 </template>
 
 <script lang="ts">
@@ -56,7 +56,7 @@ import { mdiEye, mdiEyeOff } from '@mdi/js'
 import { Otp, Security } from '@/services'
 import { useRouter } from 'vue-router'
 import { isSideBarOpenKey } from '../index.vue'
-import { Notification } from '@/components/Notification'
+import { SnackbarNotification } from '@/components/Notification'
 
 const QrcodeStream = v.defineAsyncComponent(async () => {
   return import(
@@ -79,7 +79,7 @@ interface CodeScanResultI {
 }
 
 export default v.defineComponent({
-  components: { QrcodeStream, Notification },
+  components: { QrcodeStream, SnackbarNotification },
   setup(props, ctx) {
     const otpService = v.inject(Otp.token)
     assert(otpService)

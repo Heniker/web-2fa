@@ -20,6 +20,17 @@ export class Otp {
     } as TokenI
   }
 
+  static async validate(token: TokenI, secret: string) {
+    const otp = await import(/* webpackPrefetch: true */ 'otpauth')
+
+    try {
+      otp.TOTP.generate(Object.assign({}, token, { secret: otp.Secret.fromBase32(secret) }))
+      return true
+    } catch (err) {
+      return false
+    }
+  }
+
   /**
    * Remaining cycle time in ms
    */
@@ -47,8 +58,6 @@ export class Otp {
     assert(tokens.length, 'Tokens should not be empty. This is a bug')
     tokens.forEach((it) => this.setupToken(it))
   }
-
-  private timers: Record<number, () => void> = {}
 
   @serviceUntilInject()
   private async setupToken(_: TokenI) {
@@ -83,12 +92,30 @@ export class Otp {
     return code
   }
 
+  private timers: Record<number, () => void> = {}
+
   supportedAlgorithms = ['SHA1', 'SHA256', 'SHA512'] as const satisfies readonly TokenAlgorithmT[]
 
   reactive = v.reactive({
     tokens: [] as TokenI[],
     codes: {} as Record<TokenI['id'], string>,
   })
+
+  eachPeriod(period: number, action: () => void) {
+    const prev =
+      this.timers[period] ||
+      (() => setTimeout(() => this.timers[period]?.(), Otp.getRemainingTime(period)))
+
+    this.timers[period] || queueMicrotask(prev)
+
+    let isCancelled = false
+    this.timers[period] = () => {
+      prev()
+      isCancelled || action()
+    }
+
+    return () => (isCancelled = true)
+  }
 
   @serviceInit()
   async init() {
@@ -110,22 +137,6 @@ export class Otp {
       },
       { deep: true, debounce: 300 }
     )
-  }
-
-  eachPeriod(period: number, action: () => void) {
-    const prev =
-      this.timers[period] ||
-      (() => setTimeout(() => this.timers[period]?.(), Otp.getRemainingTime(period)))
-
-    this.timers[period] || queueMicrotask(prev)
-
-    let isCancelled = false
-    this.timers[period] = () => {
-      prev()
-      isCancelled || action()
-    }
-
-    return () => (isCancelled = true)
   }
 
   @serviceUntilInit()

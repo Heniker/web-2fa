@@ -55,14 +55,7 @@
           >
             advanced
           </v-btn>
-          <v-btn
-            class="px-4"
-            tag="a"
-            color="green"
-            variant="tonal"
-            @click="saveToken"
-            :to="{ name: '' + require.resolve('@/routes/index.vue') }"
-          >
+          <v-btn class="px-4" tag="a" color="green" variant="tonal" @click="saveToken">
             Create
           </v-btn>
         </v-card-actions>
@@ -101,6 +94,9 @@
       </v-card>
     </section>
   </Teleport>
+  <SnackbarNotification v-model="isValidationError" variant="tonal" color="red">
+    <span class="text-h6 d-flex justify-center">Token validation failed</span>
+  </SnackbarNotification>
 </template>
 
 <script lang="ts">
@@ -109,12 +105,16 @@ import * as v from 'vue'
 import { useDisplay } from 'vuetify'
 import { Otp } from '@/services'
 import { nanoid } from 'nanoid'
+import { SnackbarNotification } from '@/components/Notification'
+import { useRouter } from 'vue-router'
 
 export default v.defineComponent({
-  components: {},
+  components: { SnackbarNotification },
   setup(props, ctx) {
     const otpService = v.inject(Otp.token)
     assert(otpService)
+
+    const router = useRouter()
 
     const token = v.ref(
       Otp.formToken({ label: '', issuer: '', period: 30, algorithm: 'SHA1', digits: 6 })
@@ -122,11 +122,22 @@ export default v.defineComponent({
 
     const tokenSecret = v.ref('')
 
-    const saveToken = () => {
-      otpService.addToken(token.value, tokenSecret.value)
+    const isValidationError = v.ref(false)
+
+    const saveToken = async () => {
+      const isValid = await Otp.validate(token.value, tokenSecret.value)
+
+      if (isValid) {
+        otpService.addToken(token.value, tokenSecret.value)
+        router.push({ name: '' + require.resolve('@/routes/index.vue') })
+      } else {
+        console.log(isValidationError)
+        isValidationError.value = true
+      }
     }
 
     return {
+      isValidationError,
       token,
       tokenSecret,
       saveToken,
