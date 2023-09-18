@@ -2,9 +2,15 @@ import * as v from 'vue'
 import { PersistentStorage } from './PersistentStorage'
 import { appInject, once, serviceInit, serviceUntilInit, serviceUntilInject } from './util'
 import { Security } from './Security'
-import type { TokenAlgorithmT, TokenI } from '@/_types'
+import { TokenAlgorithms, type TokenAlgorithmT, type TokenI } from '@/_types'
 import { watchDebounced } from '@vueuse/core'
 import { nanoid } from 'nanoid'
+import { formOtpCode, formSteamCode } from '@local/otp-generator'
+
+const formCode = (token: TokenI, secret: string) =>
+  token.algorithm === 'STEAM'
+    ? formSteamCode(secret)
+    : formOtpCode(secret, token.period, token.digits, token.algorithm)
 
 export class Otp {
   static token = Symbol() as v.InjectionKey<Otp>
@@ -21,12 +27,11 @@ export class Otp {
   }
 
   static async validate(token: TokenI, secret: string) {
-    const otp = await import(/* webpackPrefetch: true */ 'otpauth')
-
     try {
-      otp.TOTP.generate(Object.assign({}, token, { secret: otp.Secret.fromBase32(secret) }))
+      await formCode(token, secret)
       return true
     } catch (err) {
+      console.log(err)
       return false
     }
   }
@@ -78,23 +83,13 @@ export class Otp {
     const encryptedSecret = await this.persistentStorage.getItem(`secure-secret-${token.id}`)
     assert(encryptedSecret, `Secret not found for token <${token.id}>`)
 
-    const otp = await import(/* webpackPrefetch: true */ 'otpauth')
-
     const secret = await this.security.decrypt(encryptedSecret)
-
-    const code = new otp.TOTP({
-      secret,
-      algorithm: token.algorithm,
-      digits: token.digits,
-      period: token.period,
-    }).generate()
-
-    return code
+    return formCode(token, secret)
   }
 
   private timers: Record<number, () => void> = {}
 
-  supportedAlgorithms = ['SHA1', 'SHA256', 'SHA512'] as const satisfies readonly TokenAlgorithmT[]
+  supportedAlgorithms = TokenAlgorithms
 
   reactive = v.reactive({
     tokens: [] as TokenI[],

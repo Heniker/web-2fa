@@ -1,4 +1,4 @@
-import { refDefault, syncRef, until } from '@vueuse/core'
+import { refDefault, syncRef, until, whenever } from '@vueuse/core'
 import * as v from 'vue'
 import { VCard, VSnackbar } from 'vuetify/components'
 
@@ -45,33 +45,44 @@ export const SnackbarNotificationMount = v.defineComponent({
     const items = v.reactive([]) as ItemInfo[]
     appToItem.set(instance.appContext.app, items)
 
-    const initComponent = (it: ItemInfo) => {
-      const props = it.instance.props as VSnackbarProps
-
-      it.effectScope.run(() => {
-        v.onScopeDispose(async () => {
-          if (props.modelValue) {
-            await until(v.toRef(() => props.modelValue)).toBe(false)
-          }
-
-          // hacky way to let animations finish
-          setTimeout(() => {
-            items.splice(items.indexOf(it))
-          }, 100)
-        })
-      })
-    }
-
-    return () =>
+    const components = v.computed(() =>
       items.map((it, i) => (
         <VSnackbar
-          {...it.instance.props}
           {...it.instance.attrs}
+          {...it.instance.props}
+          onVnodeMounted={() => onVnodeMounted(it)}
           style={{ visibility: i === 0 ? 'visible' : 'hidden' }}
-          onVnodeMounted={() => initComponent(it)}
           attach={'body'}
           v-slots={it.instance.slots}
         ></VSnackbar>
       ))
+    )
+
+    return () => components.value
+
+    function onVnodeMounted(it: ItemInfo) {
+      it.effectScope.run(() => v.onScopeDispose(() => onParentUnmounted(it)))
+    }
+
+    async function onParentUnmounted(it: ItemInfo) {
+      // intentional reactivity break because parent component is already unmounted at this point
+      const modelValue = v.toRefs(it.instance.props).modelValue as v.Ref<boolean>
+
+      {
+        const prev = it.instance.attrs['onUpdate:modelValue'] as any
+        it.instance.attrs['onUpdate:modelValue'] = (arg: boolean) => {
+          prev?.()
+          modelValue.value = arg
+        }
+      }
+
+      await until(modelValue).toBe(false)
+
+      // hacky way to let animations finish
+      // because vuetify does not expose `afterLeave` event on VSnackbar
+      setTimeout(() => {
+        items.splice(items.indexOf(it))
+      }, 150)
+    }
   },
 })

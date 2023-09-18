@@ -2,9 +2,12 @@
   <Teleport to="#app-overlay-portal">
     <section :class="$style.scrim">
       <v-card
-        v-click-outside="() => $router.push({ name: '' + require.resolve('@/routes/index.vue') })"
+        v-click-outside="{
+          include: () => [...window.document.querySelectorAll('.v-select__content')],
+          handler: () => $router.push({ name: '' + require.resolve('@/routes/index.vue') }),
+        }"
         :class="$style.overlay"
-        :width="display.smAndDown ? '90vw' : 400"
+        :width="display.smAndDown ? '90vw' : 450"
         class="pb-2"
       >
         <v-card-title class="d-flex justify-center mt-3 mb-1 text-h4">Add 2FA</v-card-title>
@@ -74,16 +77,18 @@
               </v-col>
               <v-col class="mr-4">
                 <v-text-field
-                  label="Time step"
                   v-model.number="token.period"
+                  :disabled="token.algorithm === 'STEAM'"
+                  label="Time step"
                   hide-details
                   type="number"
                 />
               </v-col>
               <v-col>
                 <v-text-field
-                  label="Code size"
                   v-model.number="token.digits"
+                  :disabled="token.algorithm === 'STEAM'"
+                  label="Code size"
                   hide-details
                   type="number"
                 />
@@ -117,7 +122,17 @@ export default v.defineComponent({
     const router = useRouter()
 
     const token = v.ref(
-      Otp.formToken({ label: '', issuer: '', period: 30, algorithm: 'SHA1', digits: 6 })
+      Otp.formToken({ label: '', issuer: '', period: 30, algorithm: 'SHA-1', digits: 6 })
+    )
+
+    v.watch(
+      v.toRef(() => token.value.algorithm),
+      (arg) => {
+        if (arg === 'STEAM') {
+          token.value.period = 30
+          token.value.digits = 5
+        }
+      }
     )
 
     const tokenSecret = v.ref('')

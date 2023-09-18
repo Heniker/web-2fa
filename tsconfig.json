@@ -15,6 +15,6 @@
     },
     "ignoreDeprecations": "5.0"
   },
-  "include": ["src/**/*", "src/**/*.vue"],
+  "include": ["src/**/*", "src/**/*.vue", "packages/**/*"],
   "typeAcquisition": { "enable": true }
 }

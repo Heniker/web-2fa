@@ -1,7 +1,14 @@
-export type TokenAlgorithmT = 'SHA1' | 'SHA256' | 'SHA512'
+export type TokenAlgorithmT = 'SHA-1' | 'SHA-256' | 'SHA-512' | 'STEAM'
+
+export const TokenAlgorithms = [
+  'STEAM',
+  'SHA-1',
+  'SHA-256',
+  'SHA-512',
+] as const satisfies readonly TokenAlgorithmT[]
 
 export const isTokenAlgorithm = (arg: string): arg is TokenAlgorithmT => {
-  return ['SHA1', 'SHA256', 'SHA512'].includes(arg)
+  return TokenAlgorithms.includes(arg as TokenAlgorithmT)
 }
 
 export interface TokenI {
@@ -9,9 +16,11 @@ export interface TokenI {
   label: string
   /** Seconds */
   period: number
+  /** Normally SHA1 */
   algorithm: TokenAlgorithmT
-  /** Usually it is 6 */
+  /** Normally 6 */
   digits: number
+  /** Or description */
   issuer: string
 }
 

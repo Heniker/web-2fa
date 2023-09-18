@@ -30,12 +30,12 @@ todo:
 test qr code support on mobile
 test app with all permisions off
 
-handle wrong token secret
-steam account support
 ? Hide tokens during initial render (to avoid flicker with reduced animations setting)
 keyboard navigation (& esc to close any dialog)
 data sync with WebRTC
+Create new token suggestion if no tokens were added
 icons specific for issuer
+ServiceWorker & fully offline usage
 backup & restore to/from file
 Dran'n'Drop QR code image & config, backup files
 qr scan from screen reader
@@ -47,15 +47,18 @@ translations?
 disable progressbar during dragging
 notify user on invalid progressBarStyle setting change
 
+remove usage of otpauth completely
 add aria attributes to buttons, imgs, etc
-move otpauth to different lazy chunk, maybe allow Services to be lazy-loaded
 icons for accounts
-tokens should use single setInterval/setTimeout for each period (minor performance optimization)
 ? custom clock & time sync?
 ? copy code to clipboard on `url/id` open
 ? Add visual tracking to qr detection
 
 done:
+steam account support
+move otpauth to different lazy chunk
+tokens should use single setInterval/setTimeout for each period (minor performance optimization)
+handle wrong token secret
 fuzzy search
 handle wrong password input
 handle settings updates:

@@ -113,8 +113,6 @@ const Sidebar = v.defineAsyncComponent(
 
 const FuseImport = import(/* webpackPrefetch: true */ 'fuse.js')
 
-export const isSideBarOpenKey = Symbol() as v.InjectionKey<v.Ref<boolean>>
-
 export default v.defineComponent({
   components: {
     TwoFaCard,
