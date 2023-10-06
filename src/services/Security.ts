@@ -34,7 +34,7 @@ export class Security {
 
   @serviceUntilInit()
   async encrypt(data: string) {
-    await until(v.toRef(() => this.reactive.isContextSetUp)).toBe(true)
+    await until(() => this.reactive.isContextSetUp).toBe(true)
 
     assert(this.encryptionKey)
     assert(this.encryptionIv)
@@ -44,7 +44,7 @@ export class Security {
 
   @serviceUntilInit()
   async decrypt(data: Uint8Array) {
-    await until(v.toRef(() => this.reactive.isContextSetUp)).toBe(true)
+    await until(() => this.reactive.isContextSetUp).toBe(true)
 
     assert(this.encryptionKey)
     assert(this.encryptionIv)
@@ -117,15 +117,17 @@ export class Security {
      */
     const idle = useIdle()
 
-    const setUpForget = () => {
-      clearTimeout(persist(setUpForget))
+    let timeout: ReturnType<typeof setTimeout>
+
+    var setUpForget = () => {
+      clearTimeout(timeout)
 
       if (this.settings.reactive.passwordKeepAlive === Infinity) {
         return
       }
 
       const timePassed = Date.now() - idle.lastActive.value
-      const timeout = setTimeout(() => {
+      timeout = setTimeout(() => {
         if (timePassed > this.settings.reactive.passwordKeepAlive) {
           setUpForget()
           return
@@ -135,14 +137,9 @@ export class Security {
         this.encryptionKey = undefined
         this.reactive.isContextSetUp = false
       }, this.settings.reactive.passwordKeepAlive - timePassed + 100)
-
-      persist(setUpForget, timeout)
     }
 
-    v.watch(
-      v.toRef(() => this.settings.reactive.passwordKeepAlive),
-      setUpForget
-    )
+    v.watch(() => this.settings.reactive.passwordKeepAlive, setUpForget)
 
     setUpForget()
   }

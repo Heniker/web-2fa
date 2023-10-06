@@ -6,9 +6,9 @@
       <v-select
         v-model="selectedDevice"
         :items="videoDevices"
-        :return-object="true"
-        item-title="label"
         label="Select camera"
+        item-title="label"
+        return-object
       ></v-select>
       <QrcodeStream
         :class="$style.qrStream"
@@ -20,10 +20,10 @@
 
     <v-card-actions class="mt-n2 d-flex justify-space-around">
       <v-btn
+        :to="{ name: '' + require.resolve('@/routes/index.vue') }"
         class="px-10"
         color="red"
         variant="tonal"
-        :to="{ name: '' + require.resolve('@/routes/index.vue') }"
       >
         Cancel
       </v-btn>

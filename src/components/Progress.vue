@@ -26,6 +26,8 @@ export default v.defineComponent({
     const state = v.inject(State.token)
     assert(state)
 
+    console.log('rerender>')
+
     const transition = useTransitionValue(v.toRef(() => props.period))
 
     v.onMounted(() => transition.forcedUpdate(false))

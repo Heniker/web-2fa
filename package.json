@@ -9,9 +9,9 @@
   "dependencies": {
     "@local/otp-generator": "file:packages/otp-generator",
     "@mdi/js": "^7.2.96",
-    "@vueuse/components": "^10.2.1",
-    "@vueuse/core": "^10.2.1",
-    "@vueuse/integrations": "^10.3.0",
+    "@vueuse/components": "^10.4.1",
+    "@vueuse/core": "^10.4.1",
+    "@vueuse/integrations": "^10.4.1",
     "assert": "^2.0.0",
     "fuse.js": "^6.6.2",
     "idb-keyval": "^6.2.1",

@@ -97,16 +97,17 @@ export class Otp {
   })
 
   eachPeriod(period: number, action: () => void) {
-    const prev =
-      this.timers[period] ||
-      (() => setTimeout(() => this.timers[period]?.(), Otp.getRemainingTime(period)))
+    let prev = this.timers[period]
 
-    this.timers[period] || queueMicrotask(prev)
+    if (!prev) {
+      prev = () => setTimeout(() => this.timers[period]?.(), Otp.getRemainingTime(period))
+      queueMicrotask(prev)
+    }
 
     let isCancelled = false
     this.timers[period] = () => {
-      prev()
-      isCancelled || action()
+      prev?.()
+      isCancelled || action() // GC can probably figure this out
     }
 
     return () => (isCancelled = true)
@@ -119,7 +120,7 @@ export class Otp {
     // this is not a perfect solution, but better than alternatives
     // #todo?> could delay saving tokens until vue nextTick, which would make more sense
     watchDebounced(
-      v.toRef(() => this.reactive.tokens),
+      () => this.reactive.tokens,
       async () => {
         if (!this.reactive.tokens.length) {
           return

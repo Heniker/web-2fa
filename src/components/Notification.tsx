@@ -65,7 +65,6 @@ export const SnackbarNotificationMount = v.defineComponent({
     }
 
     async function onParentUnmounted(it: ItemInfo) {
-      // intentional reactivity break because parent component is already unmounted at this point
       const modelValue = v.toRefs(it.instance.props).modelValue as v.Ref<boolean>
 
       {

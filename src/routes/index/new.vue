@@ -165,6 +165,7 @@ export default v.defineComponent({
 
 <style scoped></style>
 <style module>
+/* Overlay can expand (changing height). So can't use flex */
 .overlay {
   position: absolute;
   z-index: 1;

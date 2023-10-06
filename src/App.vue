@@ -55,17 +55,16 @@ export default v.defineComponent({
     })
 
     v.watch(
-      v.toRef(() => settingsService.reactive.theme),
+      () => settingsService.reactive.theme,
       () => {
         vTheme.global.name.value = settingsService.reactive.theme
       }
     )
 
-    const isSecuritySetUp = v.toRef(() => securityService.reactive.isContextSetUp)
     v.watch(
-      isSecuritySetUp,
-      () => {
-        if (!isSecuritySetUp.value) {
+      () => securityService.reactive.isContextSetUp,
+      (arg) => {
+        if (!arg) {
           router.push({ name: '' + require.resolve('@/routes/index/pass') })
         }
       },

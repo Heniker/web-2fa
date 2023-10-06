@@ -151,15 +151,29 @@ export default v.defineComponent({
       )
     }
 
-    const dndEl = v.ref<Element>()
+    const dndEl = v.ref<Element | null>(null)
     const cardEls = v.ref<InstanceType<typeof import('@/components/TwoFaCard.vue').default>[]>()
 
     watchOnce(dndEl, () => {
       const st = useSortable(dndEl as any, tokens, {
         handle: '.hack_selector-drag',
-        animation: 150,
+        animation: settingsService.reactive.preferLessAnimations ? 0 : 200,
         emptyInsertThreshold: 0,
+        onEnd() {
+          v.nextTick(() => {
+            cardEls.value?.forEach((it) => {
+              it.forcedUpdate(false)
+            })
+          })
+        },
       })
+
+      v.watch(
+        () => settingsService.reactive.preferLessAnimations,
+        (arg) => {
+          st.option('animation', arg ? 0 : 200)
+        }
+      )
 
       v.watch(filterQuery, () => {
         filterQuery.value ? st.option('disabled', true) : st.option('disabled', false)

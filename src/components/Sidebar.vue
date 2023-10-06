@@ -8,8 +8,9 @@
       <v-list nav>
         <v-list-item @click="" :prepend-icon="mdiWifiSync" title="Local sync"></v-list-item>
         <v-list-item
-          @click=""
+          :to="{ name: '' + require.resolve('@/routes/index/backup.vue') }"
           :prepend-icon="mdiBackupRestore"
+          @click=""
           title="Import & Backup"
         ></v-list-item>
         <v-list-item
@@ -20,8 +21,8 @@
       </v-list>
       <v-list nav class="mt-auto">
         <v-list-item
-          @click="window.open('https://github.com/Heniker/web-2fa', '_blank')"
           :prepend-icon="mdiXml"
+          @click="window.open('https://github.com/Heniker/web-2fa', '_blank')"
           title="Source Code"
         ></v-list-item>
       </v-list>
@@ -35,9 +36,7 @@ import { mdiXml, mdiWifiSync, mdiBackupRestore, mdiCog } from '@mdi/js'
 import { onBeforeRouteUpdate, useRouter } from 'vue-router'
 
 export default v.defineComponent({
-  components: {},
-
-  props: { modelValue: { type: Boolean } },
+  props: { modelValue: { type: Boolean }, abc: { type: Number } },
 
   setup(props, ctx) {
     const isOpen = props.modelValue
