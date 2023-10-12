@@ -19321,13 +19321,22 @@ textarea.v-field__input::placeholder {
   white-space: normal;
 }
 
-[data-v-11474732] .v-input__details {
+[data-v-cf026c22] .v-input__details {
   margin-bottom: 0;
 }
-[data-v-11474732] .qrcode-stream-overlay {
+[data-v-cf026c22] .qrcode-stream-overlay {
   position: absolute;
   left: 0;
   top: 0;
+}
+
+
+.CaK66HD52m67TWWsNi6w canvas {
+  display: none; /* It's not displayed correctly on itital load. wtf is wrong with this libray */
+}
+.CaK66HD52m67TWWsNi6w video {
+  max-height: 60vh;
+  max-width: 80vw;
 }
 
 .DqjoKPvNkfPE92sGTz0p {
@@ -19337,15 +19346,6 @@ textarea.v-field__input::placeholder {
 }
 
 .A5PWrrmbHJZrGBtkiyNs {
-}
-.MFx9E4124BqRaleSY5tQ {
-}
-.GvHKeoqwDCvzIhQHP4GN canvas {
-  display: none; /* It's not displayed correctly on itital load. wtf is wrong with this libray */
-}
-.GvHKeoqwDCvzIhQHP4GN video {
-  max-height: 60vh;
-  max-width: 80vw;
 }
 
 .v-sheet {
@@ -20259,6 +20259,7 @@ textarea.v-field__input::placeholder {
     margin-right: 91.6666666667%;
   }
 }
+/* Overlay can expand (changing height). So can't use flex */
 .crRcBNcfLxn2ChZ213nr {
   position: absolute;
   z-index: 1;
@@ -20314,23 +20315,23 @@ textarea.v-field__input::placeholder {
 }
 
 
-.test[data-v-10d5b35f] {
+.test[data-v-5a8135a4] {
   /* box-shadow: 0px 0px 4px 0px rgb(var(--v-theme-background)); */
 }
-.sortable-chosen[data-v-10d5b35f] {
+.sortable-chosen[data-v-5a8135a4] {
   /* visibility: hidden !important; */
 }
-[data-v-10d5b35f] .v-field * {
+[data-v-5a8135a4] .v-field * {
   /* letter-spacing: 1px; */
   /* font-size: 30px; */
   /* --v-input-padding-top: 2px;
   --v-field-padding-start: 12px;
   --v-input-control-height: 60px; */
 }
-[data-v-10d5b35f] .v-label {
+[data-v-5a8135a4] .v-label {
   /* font-size: 17px; */
 }
-*[data-v-10d5b35f] {
+*[data-v-5a8135a4] {
   overflow: visible !important;
 }
 
@@ -20348,7 +20349,7 @@ textarea.v-field__input::placeholder {
 }
 
 
-[data-v-bcd9d0da] .v-input__details {
+[data-v-40a035be] .v-input__details {
   margin-bottom: 0;
 }
 
@@ -20623,5 +20624,3 @@ textarea.v-field__input::placeholder {
   --v-layout-top: 0px;
   --v-layout-bottom: 0px;
 }
-
-/*# sourceMappingURL=main.css.map*/

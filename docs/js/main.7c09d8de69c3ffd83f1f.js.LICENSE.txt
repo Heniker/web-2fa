@@ -1,0 +1,29 @@
+/*!
+  * vue-router v4.2.4
+  * (c) 2023 Eduardo San Martin Morote
+  * @license MIT
+  */
+
+/**
+ * Code from
+ * https://github.com/hectorm/otpauth/blob/master/src/utils/encoding/base32.js
+ * @license https://github.com/hectorm/otpauth/blob/master/LICENSE.md
+ *
+ * Converts a base32 string to an ArrayBuffer (RFC 4648).
+ * @see [LinusU/base32-decode](https://github.com/LinusU/base32-decode)
+ * @param {string} str Base32 string.
+ * @returns {ArrayBuffer} ArrayBuffer.
+ */
+
+/**
+ * WCAG 3.0 APCA perceptual contrast algorithm from https://github.com/Myndex/SAPC-APCA
+ * @licence https://www.w3.org/Consortium/Legal/2015/copyright-software-and-document
+ * @see https://www.w3.org/WAI/GL/task-forces/silver/wiki/Visual_Contrast_of_Text_Subgroup
+ */
+
+/**!
+ * Sortable 1.15.0
+ * @author	RubaXa   <trash@rubaxa.org>
+ * @author	owenm    <owen23355@gmail.com>
+ * @license MIT
+ */
