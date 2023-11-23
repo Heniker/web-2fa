@@ -26,20 +26,21 @@ export default v.defineComponent({
     const state = v.inject(State.token)
     assert(state)
 
-    console.log('rerender>')
-
+    const visibility = useDocumentVisibility()
     const transition = useTransitionValue(v.toRef(() => props.period))
 
-    v.onMounted(() => transition.forcedUpdate(false))
+    v.onMounted(() => transition.update(false))
+
+    v.watch(visibility, (arg) => arg === 'visible' && transition.update(false))
 
     v.watch(
-      v.toRef(() => state.reactive.globalProgressBar),
-      () => transition.forcedUpdate(false)
+      () => state.reactive.globalProgressBar,
+      () => transition.update(false)
     )
 
     {
       const cancelAutoUpdate = otpService.eachPeriod(props.period, () => {
-        transition.forcedUpdate(true)
+        transition.update(true)
       })
 
       v.onUnmounted(() => {
@@ -47,8 +48,17 @@ export default v.defineComponent({
       })
     }
 
-    ctx.expose({ forcedUpdate: transition.forcedUpdate })
-    return { ...transition }
+    ctx.expose({ update })
+
+    return { ...transition, update }
+
+    function update(arg: boolean) {
+      if (visibility.value === 'hidden') {
+        return
+      }
+
+      transition.update(arg)
+    }
   },
 })
 
@@ -58,21 +68,17 @@ function useTransitionValue(period: v.Ref<number>) {
   const transitionDirection = v.ref(0 as 0 | 1)
   const transitionState = v.ref(0)
 
-  const visibility = useDocumentVisibility()
-
-  const forcedUpdate = (swapDirection: boolean) => {
-    if (visibility.value === 'hidden') {
-      return
-    }
-
+  const update = (swapDirection: boolean) => {
     requestAnimationFrame(() => {
-      firstFrame(swapDirection)
-      requestAnimationFrame(nextFrame)
+      const time = Otp.getRemainingTime(period.value)
+
+      firstFrame(time, swapDirection)
+      requestAnimationFrame(() => nextFrame(time))
     })
 
-    const time = Otp.getRemainingTime(period.value)
+    return
 
-    function firstFrame(swapDirection: boolean) {
+    function firstFrame(time: number, swapDirection: boolean) {
       transitionDuration.value = 0
       swapDirection && (transitionDirection.value = Number(!transitionDirection.value))
       transitionState.value = transitionDirection.value
@@ -80,17 +86,13 @@ function useTransitionValue(period: v.Ref<number>) {
         : time / 1000 / period.value // close to 1 when period starts
     }
 
-    function nextFrame() {
+    function nextFrame(time: number) {
       transitionDuration.value = time
       transitionState.value = transitionDirection.value ? 1 : 0
     }
   }
 
-  v.watch(visibility, (arg) => {
-    arg === 'visible' && forcedUpdate(false)
-  })
-
-  return { transitionState, transitionDuration, transitionDirection, forcedUpdate }
+  return { transitionState, transitionDuration, transitionDirection, update }
 }
 </script>
 

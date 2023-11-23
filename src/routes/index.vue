@@ -162,7 +162,7 @@ export default v.defineComponent({
         onEnd() {
           v.nextTick(() => {
             cardEls.value?.forEach((it) => {
-              it.forcedUpdate(false)
+              it.updateProgress(false)
             })
           })
         },
@@ -185,7 +185,7 @@ export default v.defineComponent({
 
       v.watch(filterQuery, (val) => {
         cardEls.value?.forEach((it) => {
-          it.forcedUpdate(false)
+          it.updateProgress(false)
         })
 
         if (val) {

@@ -117,7 +117,7 @@ export default v.defineComponent({
     const state = v.inject(State.token)
     assert(state)
 
-    const displayCode = v.ref(v.computed(() => otpService.reactive.codes[props.token.id] || ''))
+    const displayCode = v.computed(() => otpService.reactive.codes[props.token.id] || '')
     const isEdit = v.ref(false)
 
     const isCopyNotification = v.ref(false)
@@ -135,16 +135,16 @@ export default v.defineComponent({
 
     const progressEl = v.ref<InstanceType<typeof import('@/components/Progress.vue').default>>()
 
-    const forcedUpdate = (arg: boolean) => {
-      progressEl.value?.forcedUpdate(arg)
+    const updateProgress = (arg: boolean) => {
+      progressEl.value?.update(arg)
     }
 
     ctx.expose({
-      forcedUpdate,
+      updateProgress,
     })
 
     return {
-      forcedUpdate, // only for correct expose typing
+      updateProgress,
 
       progressEl,
 

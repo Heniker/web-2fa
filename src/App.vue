@@ -145,6 +145,11 @@ export default v.defineComponent({
   image-rendering: optimizeQuality;
 
   overflow: auto;
+
+  --color-1: #292929;
+  --color-2: #3b3b3b;
+  --color-3: #3636363a;
+  --color-4: #3636363a;
 }
 
 * {

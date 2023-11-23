@@ -33,13 +33,13 @@ export default async (_, argv) => {
    * @type {import('webpack').Configuration & {devServer: any}}
    */
   const result = {
-    devtool: isDev ? 'source-map' : 'source-map',
+    devtool: isDev ? 'source-map' : false,
     resolve: {
       modules: ['node_modules', '.'],
       alias: {
         '@': 'src',
         // > uncomment if runtime template compiler is required
-        // vue: 'vue/dist/vue.esm-bundler.js
+        // vue: 'vue/dist/vue.esm-bundler.js',
       },
       extensions: ['.js', '.vue', '.ts', '.tsx', '.jsx'],
     },

@@ -8,9 +8,8 @@
       <v-list nav>
         <v-list-item @click="" :prepend-icon="mdiWifiSync" title="Local sync"></v-list-item>
         <v-list-item
-          :to="{ name: '' + require.resolve('@/routes/index/backup.vue') }"
           :prepend-icon="mdiBackupRestore"
-          @click=""
+          :to="{ name: '' + require.resolve('@/routes/index/backup.vue') }"
           title="Import & Backup"
         ></v-list-item>
         <v-list-item
@@ -21,8 +20,8 @@
       </v-list>
       <v-list nav class="mt-auto">
         <v-list-item
-          :prepend-icon="mdiXml"
           @click="window.open('https://github.com/Heniker/web-2fa', '_blank')"
+          :prepend-icon="mdiXml"
           title="Source Code"
         ></v-list-item>
       </v-list>

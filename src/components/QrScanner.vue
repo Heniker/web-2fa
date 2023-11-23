@@ -61,11 +61,6 @@ export default v.defineComponent({
   components: { QrcodeStream, SnackbarNotification },
 
   setup(props, ctx) {
-    const otpService = v.inject(Otp.token)
-    assert(otpService)
-    const securityService = v.inject(Security.token)
-    assert(securityService)
-
     const selectedDevice = v.ref<MediaDeviceInfo | undefined>()
     const videoDevices = v.ref([] as MediaDeviceInfo[])
 
@@ -79,7 +74,14 @@ export default v.defineComponent({
         selectedDevice.value = it[0]
       })
 
-    const onCodeDetect = async (arg: [CodeScanResultI]) => {
+    return {
+      selectedDevice,
+      videoDevices,
+
+      onCodeDetect,
+    }
+
+    async function onCodeDetect(arg: [CodeScanResultI]) {
       // #todo> remove usage of otpauth completely
       const otpUri = (await import('otpauth')).URI
 
@@ -94,13 +96,6 @@ export default v.defineComponent({
       const token = Otp.formToken(Object.assign(parsed, { algorithm }))
 
       ctx.emit('detected', token, parsed.secret.base32)
-    }
-
-    return {
-      selectedDevice,
-      videoDevices,
-
-      onCodeDetect,
     }
   },
 })
