@@ -54,20 +54,16 @@
 </template>
 
 <script lang="ts">
-import type { TokenI, TokenAlgorithmT } from '@/_types'
 import * as v from 'vue'
-import { useDisplay, useTheme } from 'vuetify'
-import { Otp, Settings } from '@/services'
-import { nanoid } from 'nanoid'
+import { useStore } from '@/store'
 
 export default v.defineComponent({
   components: {},
   setup(props, ctx) {
-    const settingsService = v.inject(Settings.token)
-    assert(settingsService)
+    const store = useStore()
 
     const appLockTime = {
-      selected: v.toRefs(settingsService.reactive).passwordKeepAlive,
+      selected: v.toRef(() => store.settings.passwordKeepAlive),
       options: [
         {
           title: 'Instant',
@@ -105,22 +101,22 @@ export default v.defineComponent({
     }
 
     const appTheme = {
-      selected: v.toRefs(settingsService.reactive).theme,
-      options: settingsService.themeValues.map((it) => ({
-        title: it.slice(0, 1).toUpperCase() + it.slice(1),
-        value: it,
-      })),
+      selected: v.toRef(() => store.settings.theme),
+      options: [
+        { title: 'Dark', value: 'dark' },
+        { title: 'Light', value: 'light' },
+      ] satisfies { title: string; value: typeof store.settings.theme }[],
     }
 
     const appProgressBar = {
-      selected: v.toRefs(settingsService.reactive).progressBarStyle,
-      options: settingsService.progressBarValues.map((it) => ({
-        title: it.slice(0, 1).toUpperCase() + it.slice(1),
-        value: it,
-      })),
+      selected: v.toRef(() => store.settings.progressBarStyle),
+      options: [
+        { title: 'Grouped', value: 'grouped' },
+        { title: 'Multiple', value: 'multiple' },
+      ] satisfies { title: string; value: typeof store.settings.progressBarStyle }[],
     }
 
-    const preferLessAnimations = v.toRefs(settingsService.reactive).preferLessAnimations
+    const preferLessAnimations = v.toRef(() => store.settings.preferLessAnimations)
 
     return {
       appLockTime,

@@ -11,88 +11,68 @@
 </template>
 
 <script lang="ts">
-import { Otp, State } from '@/services'
+import { forceProgressUpdateToken } from '@/constant'
+import { otpService } from '@/services'
+import { useStore } from '@/store'
 import { useDocumentVisibility } from '@vueuse/core'
 import * as v from 'vue'
 
 export default v.defineComponent({
   props: {
     period: { type: Number as v.PropType<number>, required: true },
+    direction: { type: Number as v.PropType<0 | 1>, required: true },
   },
   components: {},
-  setup(props, ctx) {
-    const otpService = v.inject(Otp.token)
-    assert(otpService)
-    const state = v.inject(State.token)
-    assert(state)
-
+  setup(props) {
+    const store = useStore()
     const visibility = useDocumentVisibility()
     const transition = useTransitionValue(v.toRef(() => props.period))
 
-    v.onMounted(() => transition.update(false))
+    const forceProgressUpdateTrigger = v.inject(forceProgressUpdateToken) || v.ref()
 
-    v.watch(visibility, (arg) => arg === 'visible' && transition.update(false))
+    const update = () => transition.update(props.direction)
 
-    v.watch(
-      () => state.reactive.globalProgressBar,
-      () => transition.update(false)
-    )
+    v.onMounted(update)
+    v.watch(forceProgressUpdateTrigger, update)
+    // v.watch(() => visibility.value === 'visible', update)
+    v.watch(() => props.direction, update)
+    v.watch(() => store.state.globalProgressBar, update)
 
-    {
-      const cancelAutoUpdate = otpService.eachPeriod(props.period, () => {
-        transition.update(true)
-      })
-
-      v.onUnmounted(() => {
-        cancelAutoUpdate()
-      })
-    }
-
-    ctx.expose({ update })
-
-    return { ...transition, update }
-
-    function update(arg: boolean) {
-      if (visibility.value === 'hidden') {
-        return
-      }
-
-      transition.update(arg)
-    }
+    return { ...transition }
   },
 })
 
-// this seems to be much more efficient than Animations API
+/**
+ * This seems to be much more cpu efficient than Animations API
+ * @pure
+ */
 function useTransitionValue(period: v.Ref<number>) {
   const transitionDuration = v.ref(0)
   const transitionDirection = v.ref(0 as 0 | 1)
   const transitionState = v.ref(0)
 
-  const update = (swapDirection: boolean) => {
+  const update = (direction: 0 | 1) => {
     requestAnimationFrame(() => {
-      const time = Otp.getRemainingTime(period.value)
-
-      firstFrame(time, swapDirection)
+      transitionDirection.value = direction
+      const time = otpService.getRemainingTime(period.value)
+      firstFrame(time)
       requestAnimationFrame(() => nextFrame(time))
     })
-
-    return
-
-    function firstFrame(time: number, swapDirection: boolean) {
-      transitionDuration.value = 0
-      swapDirection && (transitionDirection.value = Number(!transitionDirection.value))
-      transitionState.value = transitionDirection.value
-        ? (period.value - time / 1000) / period.value // close to 0 when period starts
-        : time / 1000 / period.value // close to 1 when period starts
-    }
-
-    function nextFrame(time: number) {
-      transitionDuration.value = time
-      transitionState.value = transitionDirection.value ? 1 : 0
-    }
   }
 
   return { transitionState, transitionDuration, transitionDirection, update }
+
+  function firstFrame(time: number) {
+    transitionDuration.value = 0
+    transitionState.value = transitionDirection.value
+      ? (period.value - time / 1000) / period.value // close to 0 when period starts
+      : time / 1000 / period.value // close to 1 when period starts
+  }
+
+  function nextFrame(time: number) {
+    transitionDuration.value = time
+    transitionState.value = transitionDirection.value ? 1 : 0
+  }
 }
 </script>
 

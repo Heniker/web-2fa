@@ -1,3 +1,5 @@
+import type { Tagged } from 'type-fest'
+
 export type TokenAlgorithmT = 'SHA-1' | 'SHA-256' | 'SHA-512' | 'STEAM'
 
 export const TokenAlgorithms = [
@@ -24,40 +26,23 @@ export interface TokenI {
   issuer: string
 }
 
+export type TokenSecretTag = Tagged<string, 'tokenSecret'>
+
+export type EncryptedTag<T = void> = Tagged<Uint8Array, 'encrypted', T>
+
 export interface AppSettingsI {
-  /** ms. time to forget user password. +Infinity allowed */
   passwordKeepAlive: number
-  theme: 'dark' | 'light'
-  progressBarStyle: 'grouped' | 'multiple'
+  theme: "dark" | "light"
+  progressBarStyle: "grouped" | "multiple"
   preferLessAnimations: boolean
 }
 
-export interface KeyValStorageDataI extends Encrypted, Decrypted {
-  /** Not encrypted */
-  'app-settings'?: AppSettingsI
-
+/* Everything except IV is encrpyted */
+export interface KeyValStorage {
   /** Initialization vector used for encrypted content protection. Can be safely stored alongside encrypted content  */
-  iv?: Uint8Array
-}
-
-interface Encrypted {
-  /** Encrypted TokenI data. Can be decrpyted with user password and iv */
-  'secure-tokens'?: Uint8Array
-
-  /**
-   * Token's secret is stored separetly. This is mostly a convenience so as to not keep secrets in RAM
-   * (which is futille bcs no access to mem management, but w/e)
-   * #security> This allows to know the amount of stored encrypted tokens
-   * This is not a problem per se and no protection is implemented from this rn
-   */
-  [key: `secure-secret-${TokenI['id']}`]: Uint8Array
-
-  /** Validation message used for testing provided password */
-  'secure-validation'?: Uint8Array
-}
-
-interface Decrypted {
-  tokens?: TokenI[]
-  [key: `secret-${TokenI['id']}`]: string
-  validation?: 'valid'
+  iv: Uint8Array
+  'app-settings': AppSettingsI
+  tokens: TokenI[]
+  [key: `secret-${string}`]: string
+  validation: 'valid'
 }

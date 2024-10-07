@@ -23,24 +23,19 @@
 </template>
 
 <script lang="ts">
-import { type TokenI } from '@/_types'
+import { type TokenI, type TokenSecretTag } from '@/_types'
 import * as v from 'vue'
 import { mdiEye, mdiEyeOff } from '@mdi/js'
-import { Otp, Security, State } from '@/services'
 import { useRouter } from 'vue-router'
 import { SnackbarNotification } from '@/components/Notification'
 import QrScanner from '@/components/QrScanner.vue'
+import { useStore } from '@/store'
+import { otpService } from '@/services'
 
 export default v.defineComponent({
   components: { QrScanner, SnackbarNotification },
   setup(props, ctx) {
-    const otpService = v.inject(Otp.token)
-    assert(otpService)
-    const securityService = v.inject(Security.token)
-    assert(securityService)
-    const state = v.inject(State.token)
-    assert(state)
-
+    const store = useStore()
     const router = useRouter()
 
     const isError = v.ref(false)
@@ -49,14 +44,14 @@ export default v.defineComponent({
     }
 
     const isSuccess = v.ref(false)
-    const onDetected = (token: TokenI, secret: string) => {
-      otpService.addToken(token, secret)
+    const onDetected = (token: TokenI, secret: TokenSecretTag) => {
+      store.token.add(token, secret)
       isSuccess.value = true
 
       router.push({ name: require.resolve('@/routes/index.vue') + '' })
     }
 
-    state.reactive.isSideBarOpen = false
+    store.state.isSideBarOpen = false
 
     return {
       isError,

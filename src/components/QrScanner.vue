@@ -34,8 +34,8 @@
 <script lang="ts">
 import { isTokenAlgorithm } from '@/_types'
 import * as v from 'vue'
-import { Otp, Security } from '@/services'
 import { SnackbarNotification } from '@/components/Notification'
+import { otpService } from '@/services/otp'
 
 const QrcodeStream = v.defineAsyncComponent(async () => {
   return import(
@@ -93,7 +93,7 @@ export default v.defineComponent({
       assert('period' in parsed)
       assert(isTokenAlgorithm(algorithm))
 
-      const token = Otp.formToken(Object.assign(parsed, { algorithm }))
+      const token = otpService.formToken(Object.assign(parsed, { algorithm }))
 
       ctx.emit('detected', token, parsed.secret.base32)
     }

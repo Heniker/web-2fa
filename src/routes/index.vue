@@ -37,10 +37,10 @@
         ></v-btn>
       </ProvideValue>
     </div>
-
     <Progress
       v-if="globalProgressBar"
       :period="globalProgressBar"
+      :direction="tokens[0]?.transitionDirection || 1"
       :class="$style.progressBar"
     ></Progress>
 
@@ -74,9 +74,20 @@
     </Teleport>
   </Teleport>
   <v-container v-if="isContextSetUp" fluid>
-    <v-row ref="dndEl">
-      <v-col cols="12" md="6" lg="4" xl="3" v-for="token in tokens" :key="token.id">
-        <TwoFaCard ref="cardEls" :id="`card-${token.id}`" :token="token"></TwoFaCard>
+    <v-row ref="dndContainerEl">
+      <v-col
+        cols="12"
+        md="6"
+        lg="4"
+        xl="3"
+        v-for="searchResult in filteredTokens"
+        :key="searchResult.item.id"
+      >
+        <TwoFaCard
+          ref="cardEls"
+          :id="`card-${searchResult.item.id}`"
+          :token="searchResult.item"
+        ></TwoFaCard>
       </v-col>
     </v-row>
   </v-container>
@@ -93,15 +104,14 @@ import {
   mdiMagnify,
   mdiClose,
 } from '@mdi/js'
-import { onClickOutside, watchOnce } from '@vueuse/core'
 import TwoFaCard from '@/components/TwoFaCard.vue'
-import { Otp, Security, Settings, State } from '@/services'
 import { useSortable } from '@vueuse/integrations/useSortable'
-import { ProvideValue, makePersist, persist, trigger } from '@/util'
+import { ProvideValue, createTrigger, pullTrigger } from '@/util'
 import Progress from '@/components/Progress.vue'
-import type { TokenI } from '@/_types'
-import { eagerComputed } from '@vueuse/core'
-import { computedAsync } from '@vueuse/core'
+import { useFuse } from '@vueuse/integrations/useFuse'
+import { useStore } from '@/store'
+import type { TokenStoreI } from '@/store/tokens'
+import { forceProgressUpdateToken } from '@/constant'
 
 const Sidebar = v.defineAsyncComponent(
   () =>
@@ -122,74 +132,29 @@ export default v.defineComponent({
   },
 
   setup() {
-    const otpService = v.inject(Otp.token)
-    assert(otpService)
-    const securityService = v.inject(Security.token)
-    assert(securityService)
-    const settingsService = v.inject(Settings.token)
-    assert(settingsService)
-    const state = v.inject(State.token)
-    assert(state)
-
+    const store = useStore()
     const filterQuery = v.ref('')
+    const forceProgressUpdateTrigger = createTrigger<void>()
 
-    {
-      const searchTokens = async (arg: string) => {
-        const fuseInstance = FuseImport.then(
-          (it) => new it.default(otpService.reactive.tokens, { keys: ['label', 'issuer'] })
-        )
+    v.provide(forceProgressUpdateToken, forceProgressUpdateTrigger)
 
-        return (await fuseInstance).search(arg).map((it) => it.item)
-      }
+    const { results: filteredTokens } = useFuse(
+      filterQuery,
+      v.toRef(() => store.token.tokens),
+      { fuseOptions: { keys: ['label', 'issuer'] }, matchAllWhenSearchEmpty: true }
+    )
 
-      var tokens = computedAsync(
-        async () =>
-          filterQuery.value && otpService.reactive.tokens
-            ? await searchTokens(filterQuery.value)
-            : otpService.reactive.tokens,
-        []
-      )
-    }
-
-    const dndEl = v.ref<Element | null>(null)
+    const dndContainerEl = v.ref<Element | null>(null)
     const cardEls = v.ref<InstanceType<typeof import('@/components/TwoFaCard.vue').default>[]>()
 
-    watchOnce(dndEl, () => {
-      const st = useSortable(dndEl as any, tokens, {
-        handle: '.hack_selector-drag',
-        animation: settingsService.reactive.preferLessAnimations ? 0 : 200,
-        emptyInsertThreshold: 0,
-        onEnd() {
-          v.nextTick(() => {
-            cardEls.value?.forEach((it) => {
-              it.updateProgress(false)
-            })
-          })
-        },
-      })
-
-      v.watch(
-        () => settingsService.reactive.preferLessAnimations,
-        (arg) => {
-          st.option('animation', arg ? 0 : 200)
-        }
-      )
-
-      v.watch(filterQuery, () => {
-        filterQuery.value ? st.option('disabled', true) : st.option('disabled', false)
-      })
-    })
-
     {
-      let lastSearchResult: TokenI | undefined
+      let lastSearchResult: TokenStoreI | undefined
 
       v.watch(filterQuery, (val) => {
-        cardEls.value?.forEach((it) => {
-          it.updateProgress(false)
-        })
+        pullTrigger(forceProgressUpdateTrigger)
 
         if (val) {
-          lastSearchResult = tokens.value[0]
+          lastSearchResult = filteredTokens.value[0]?.item
         } else {
           v.nextTick(() => {
             lastSearchResult &&
@@ -200,17 +165,50 @@ export default v.defineComponent({
       })
     }
 
+    v.onMounted(async () => {
+      const st = useSortable(dndContainerEl as any, () => store.token.tokens, {
+        handle: '.hack_selector-drag',
+        animation: store.settings.preferLessAnimations ? 0 : 200,
+        emptyInsertThreshold: 0,
+        async onEnd() {
+          await v.nextTick()
+          pullTrigger(forceProgressUpdateTrigger)
+          store.token.save()
+        },
+      })
+
+      v.watch(
+        () => store.token.tokens.length,
+        () => {
+          st.stop()
+          st.start()
+        }
+      )
+
+      v.watch(
+        () => store.settings.preferLessAnimations,
+        (arg) => {
+          st.option('animation', arg ? 0 : 200)
+        }
+      )
+
+      v.watch(filterQuery, () => {
+        filterQuery.value ? st.option('disabled', true) : st.option('disabled', false)
+      })
+    })
+
     return {
-      dndEl,
+      dndContainerEl,
       cardEls,
 
-      globalProgressBar: v.toRef(() => state.reactive.globalProgressBar),
-      isSideBarOpen: v.toRefs(state.reactive).isSideBarOpen,
-      tokens,
+      globalProgressBar: v.toRef(() => store.state.globalProgressBar),
+      isSideBarOpen: v.toRef(() => store.state.isSideBarOpen),
+      tokens: v.toRef(() => store.token.tokens),
+      filteredTokens,
       filterQuery,
-      isContextSetUp: v.toRef(() => securityService.reactive.isContextSetUp),
+      isContextSetUp: v.toRef(() => store.security.isContextSetUp),
       isAdding: v.ref(true),
-      preferLessAnimations: v.toRef(() => settingsService.reactive.preferLessAnimations),
+      preferLessAnimations: v.toRef(() => store.settings.preferLessAnimations),
 
       mdiClose,
       mdiReorderHorizontal,

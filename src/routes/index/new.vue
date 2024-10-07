@@ -35,6 +35,7 @@
               hide-details
               class="mt-3"
               :rules="[(v) => !!v || 'Token is required']"
+              @keyup.enter="saveToken"
             ></v-text-field>
           </v-form>
         </v-card-text>
@@ -69,7 +70,7 @@
               <v-col class="mr-4">
                 <v-select
                   v-model="token.algorithm"
-                  :items="otpService.supportedAlgorithms"
+                  :items="supportedAlgorithms"
                   label="Algorithm"
                   variant="solo-filled"
                   hide-details
@@ -105,24 +106,21 @@
 </template>
 
 <script lang="ts">
-import type { TokenI, TokenAlgorithmT } from '@/_types'
+import { type TokenSecretTag } from '@/_types'
 import * as v from 'vue'
-import { useDisplay } from 'vuetify'
-import { Otp } from '@/services'
-import { nanoid } from 'nanoid'
 import { SnackbarNotification } from '@/components/Notification'
 import { useRouter } from 'vue-router'
+import { useStore } from '@/store'
+import { otpService } from '@/services/otp'
 
 export default v.defineComponent({
   components: { SnackbarNotification },
   setup(props, ctx) {
-    const otpService = v.inject(Otp.token)
-    assert(otpService)
-
+    const store = useStore()
     const router = useRouter()
 
     const token = v.ref(
-      Otp.formToken({ label: '', issuer: '', period: 30, algorithm: 'SHA-1', digits: 6 })
+      otpService.formToken({ label: '', issuer: '', period: 30, algorithm: 'SHA-1', digits: 6 })
     )
 
     v.watch(
@@ -135,15 +133,15 @@ export default v.defineComponent({
       }
     )
 
-    const tokenSecret = v.ref('')
+    const tokenSecret = v.ref<TokenSecretTag>('' as TokenSecretTag)
 
     const isValidationError = v.ref(false)
 
     const saveToken = async () => {
-      const isValid = await Otp.validate(token.value, tokenSecret.value)
+      const isValid = await otpService.validate(token.value, tokenSecret.value)
 
       if (isValid) {
-        otpService.addToken(token.value, tokenSecret.value)
+        store.token.add(token.value, tokenSecret.value)
         router.push({ name: '' + require.resolve('@/routes/index.vue') })
       } else {
         console.log(isValidationError)
@@ -152,11 +150,12 @@ export default v.defineComponent({
     }
 
     return {
+      supportedAlgorithms: otpService.SUPPORTED_ALGORITHMS,
       isValidationError,
       token,
       tokenSecret,
       saveToken,
-      otpService,
+      otpService: otpService,
       isAdvancedExpanded: v.ref(false),
     }
   },

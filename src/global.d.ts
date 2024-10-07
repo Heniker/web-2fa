@@ -1,9 +1,8 @@
 import type { MaybeComputedRef, Pausable, UseIntervalOptions } from '@vueuse/core'
-import { KeyValStorageDataI } from './_types'
+import { EncryptedStorage } from './_types'
 import { useDisplay, useTheme } from 'vuetify'
 import type { Ref } from 'vue'
 
-type Falsy = false | 0 | '' | null | undefined
 type AssertT = (condition: any, msg?: string) => asserts condition
 type PickByValue<T, V> = Pick<T, { [K in keyof T]: T[K] extends V ? K : never }[keyof T]>
 
@@ -52,15 +51,11 @@ declare global {
     filter<S extends T>(predicate: BooleanConstructor, thisArg?: any): Exclude<S, Falsy>[]
   }
 
-  interface ObjectConstructor {
-    keys<T>(
-      obj: T
-    ): T extends object ? (keyof T)[] : T extends Array<any> | string ? string[] : never
-  }
-
   type ToEntries<T> = {
     [K in keyof T]: [keyof PickByValue<T, T[K]>, T[K]]
   }[keyof T][]
+
+  type Falsy = false | 0 | '' | null | undefined
 
   var assert: AssertT
   var __webpack_module__: typeof module

@@ -82,7 +82,12 @@
         </span>
       </v-avatar>
     </div>
-    <Progress v-if="!globalProgressBar" ref="progressEl" :period="token.period"></Progress>
+    <Progress
+      v-if="!globalProgressBar"
+      ref="progressEl"
+      :period="token.period"
+      :direction="token.transitionDirection"
+    ></Progress>
   </v-card>
 </template>
 
@@ -93,8 +98,10 @@ import { whenever } from '@vueuse/core'
 import { vOnLongPress } from '@vueuse/components'
 import { seededRandom } from '../util'
 import type { TokenI } from '@/_types'
-import { Otp, Settings, State } from '@/services'
 import Progress from '@/components/Progress.vue'
+import { useStore } from '@/store'
+import type { TokenStoreI } from '@/store/tokens'
+import { forceProgressUpdateToken } from '@/constant'
 
 export default v.defineComponent({
   components: {
@@ -106,18 +113,14 @@ export default v.defineComponent({
   },
 
   props: {
-    token: { type: Object as v.PropType<TokenI>, required: true },
+    token: { type: Object as v.PropType<TokenStoreI>, required: true },
   },
 
   setup(props, ctx) {
-    const otpService = v.inject(Otp.token) as Otp
-    assert(otpService)
-    const settingsService = v.inject(Settings.token)
-    assert(settingsService)
-    const state = v.inject(State.token)
-    assert(state)
-
-    const displayCode = v.computed(() => otpService.reactive.codes[props.token.id] || '')
+    const store = useStore()
+    const displayCode = v.computed(
+      () => store.token.tokens.find((it) => it.id === props.token.id)?.code || ''
+    )
     const isEdit = v.ref(false)
 
     const isCopyNotification = v.ref(false)
@@ -133,32 +136,24 @@ export default v.defineComponent({
       }, 1200)
     }
 
-    const progressEl = v.ref<InstanceType<typeof import('@/components/Progress.vue').default>>()
-
-    const updateProgress = (arg: boolean) => {
-      progressEl.value?.update(arg)
-    }
-
-    ctx.expose({
-      updateProgress,
-    })
+    whenever(
+      () => !isEdit.value,
+      () => {
+        store.token.save()
+      }
+    )
 
     return {
-      updateProgress,
-
-      progressEl,
-
-      globalProgressBar: v.toRef(() => state.reactive.globalProgressBar),
+      globalProgressBar: v.toRef(() => store.state.globalProgressBar),
       isCopyNotification,
       displayCode,
 
       isEdit,
       color: getColorForString(props.token.label),
-      preferLessAnimations: v.toRef(() => settingsService.reactive.preferLessAnimations),
+      preferLessAnimations: v.toRef(() => store.settings.preferLessAnimations),
 
       remove: () => {
-        const tokens = otpService.reactive.tokens
-        tokens.splice(tokens.indexOf(props.token), 1)
+        store.token.remove(props.token.id)
       },
       copyCode,
 

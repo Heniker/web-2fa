@@ -18,7 +18,7 @@ const appToItem = new WeakMap<v.App, ItemInfo[]>()
 export const SnackbarNotification = v.defineComponent({
   inheritAttrs: false,
 
-  props: Object.keys(VSnackbar.props) as (keyof VSnackbarProps)[],
+  props: Object.keys(VSnackbar.props),
 
   setup(props: VSnackbarProps, ctx) {
     const instance = v.getCurrentInstance()
@@ -29,7 +29,9 @@ export const SnackbarNotification = v.defineComponent({
     assert(notifications, 'NotificationMount should be initiated first')
     assert(ctx.slots.default, 'Default slot is required')
 
-    notifications.push({ instance, effectScope: v.effectScope() })
+    const item = { instance, effectScope: v.effectScope() }
+    notifications.push(item)
+    // v.onUnmounted(() => notifications.splice(notifications.indexOf(item), 1))
 
     // Nothing is rendered here. Default slot is 'teleported' to NotificationMount
     // This is just a convenience to keep all ui info in <template>
@@ -51,7 +53,7 @@ export const SnackbarNotificationMount = v.defineComponent({
           {...it.instance.attrs}
           {...it.instance.props}
           onVnodeMounted={() => onVnodeMounted(it)}
-          style={{ visibility: i === 0 ? 'visible' : 'hidden' }}
+          // style={{ visibility: i === 0 ? 'visible' : 'hidden' }}
           attach={'body'}
           v-slots={it.instance.slots}
         ></VSnackbar>
@@ -65,10 +67,12 @@ export const SnackbarNotificationMount = v.defineComponent({
     }
 
     async function onParentUnmounted(it: ItemInfo) {
-      const modelValue = v.toRefs(it.instance.props).modelValue as v.Ref<boolean>
+      // intentional reactivity break
+      const modelValue = v.ref(it.instance.props.modelValue)
 
       {
         const prev = it.instance.attrs['onUpdate:modelValue'] as any
+        modelValue.value = prev
         it.instance.attrs['onUpdate:modelValue'] = (arg: boolean) => {
           prev?.()
           modelValue.value = arg
@@ -81,7 +85,7 @@ export const SnackbarNotificationMount = v.defineComponent({
       // because vuetify does not expose `afterLeave` event on VSnackbar
       setTimeout(() => {
         items.splice(items.indexOf(it))
-      }, 150)
+      }, 200)
     }
   },
 })

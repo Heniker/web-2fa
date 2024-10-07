@@ -22,13 +22,6 @@ Array.prototype.at ||
     num < 0 ? this[this.length + num] : this[num]
   })
 
-{
-  // My way to run tests
-  const tests = require.context('.', true, /\.test\.ts/) // tests are ignored during prod build
-  tests.keys().forEach(tests)
-  // is obviously the best way
-}
-
 assert(globalThis, 'globalThis is not avaliable')
 assert(globalThis.indexedDB, 'indexedDB is not avaliable')
 assert(globalThis.crypto.subtle, 'crypto.subtle is not avaliable')
@@ -41,7 +34,7 @@ import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
 import { buildPages } from 'vue-pages-builder'
 import * as services from './services'
 import App from './App.vue'
-import { appToken } from './services/util'
+import { appToken } from '@/constant'
 
 const app = v.createApp(App)
 
@@ -98,12 +91,12 @@ app.provide(appToken, app) // https://github.com/vuejs/core/issues/8594
 
 // Create instances first THEN call .provide
 // Because services should not have a chance to use injected instances synchronously
-Object.values(services)
-  .map((it) => [it, app.runWithContext(() => new it())] as const)
-  .forEach(([construct, instance]) => {
-    // Do not forget to add `static token` to all services (TS enforces this here)
-    app.provide(construct.token, instance)
-  })
+// Object.values(services)
+//   .map((it) => [it, app.runWithContext(() => new it())] as const)
+//   .forEach(([construct, instance]) => {
+//     // Do not forget to add `static token` to all services (TS enforces this here)
+//     app.provide(construct.token, instance)
+//   })
 
 app.config.globalProperties.console = console
 app.config.globalProperties.window = window

@@ -1,10 +1,12 @@
+import { isDefined } from '@/util'
+
 const persistCache = new WeakMap<any, any>()
 const persistKey = {}
 
 /**
  * Last argument is always value to be persisted
  * can be used as a convinence to avoid closures or to attach metadata to object
- * do not use it though, as it's rather easy to get wrong
+ * do not use it though
  */
 export const persist = (...args: [...any[]]) => {
   const lastArg = args.at(-1)
@@ -32,25 +34,32 @@ export const persist = (...args: [...any[]]) => {
   currentMap.set(persistKey, lastArg)
 }
 
-/**
- * Somewhat typed version of persist
- * Optional argument allows providing default value that will be initiated on first call
- * When using optional argument, `undefined` will never be returned
- */
-export const makePersist = <T extends readonly object[], R extends unknown>(
-  makeDefaultVal?: () => R
-) => {
-  const localPersistKey = {}
+const persist2 = (path: any[], setValue?: any) => {
+  let currentMap = persistCache
 
-  return <J extends R | void = void>(...args: [...T, J?]): J extends R ? void : R => {
-    const result = persist(localPersistKey, ...args)
+  for (let it of path) {
+    const stored = currentMap.get(it)
 
-    if (result === undefined && makeDefaultVal) {
-      const defaultVal = makeDefaultVal()
-      persist(localPersistKey, ...args, defaultVal)
-      return defaultVal as any
+    if (stored) {
+      currentMap = stored
+      continue
     }
 
-    return result
+    const wm = new WeakMap()
+
+    currentMap.set(it, wm)
+    currentMap = wm
+  }
+
+  isDefined(setValue) && currentMap.set(persistKey, setValue)
+  return currentMap.get(persistKey)
+}
+
+export const makePersist = <T extends readonly object[], R>() => {
+  const localKey = {}
+
+  return (args: T, init?: () => R): R => {
+    const result = persist2([localKey, ...args])
+    return isDefined(result) ? result : persist2([localKey, ...args], init?.())
   }
 }

@@ -51,35 +51,40 @@
   <SnackbarNotification v-model="isError" variant="tonal" color="red">
     <span class="text-h6 d-flex justify-center">Decryption Error</span>
   </SnackbarNotification>
+  <SnackbarNotification v-model="isPasswordCreated" variant="tonal" color="green">
+    <span class="text-h6 d-flex justify-center">Password created</span>
+  </SnackbarNotification>
 </template>
 
 <script lang="ts">
-import type { TokenI } from '@/_types'
 import * as v from 'vue'
 import { mdiEye, mdiEyeOff } from '@mdi/js'
-import { Otp, Security } from '@/services'
 import { ProvideValue } from '@/util'
 import { useRouter } from 'vue-router'
 import { SnackbarNotification } from '@/components/Notification'
+import { useStore } from '@/store'
 
 export default v.defineComponent({
   components: { ProvideValue, SnackbarNotification },
   setup(props, ctx) {
-    const otpService = v.inject(Otp.token)
-    assert(otpService)
-    const securityService = v.inject(Security.token)
-    assert(securityService)
-
+    const store = useStore()
     const router = useRouter()
     const password = v.ref('')
 
     const isError = v.ref(false)
+    const isPasswordCreated = v.ref(false)
 
     const onPasswordAccept = async () => {
-      // const result = await securityService.setupSecureContext(password.value)
-      const result = await securityService.setupSecureContext(password.value)
+      const result = await store.security.setupSecureContext(password.value)
+      console.log('result')
+      console.log(result)
+      if (result === 'new_iv') {
+        isPasswordCreated.value = true
+      }
+
       if (result) {
         router.push({ name: '' + require.resolve('@/routes/index.vue') })
+        isError.value = false
       } else {
         password.value = ''
         isError.value = true
@@ -88,6 +93,7 @@ export default v.defineComponent({
 
     return {
       isError,
+      isPasswordCreated,
 
       password,
       onPasswordAccept,

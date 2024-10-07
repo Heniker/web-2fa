@@ -27,49 +27,41 @@
 
 <script lang="ts">
 import * as v from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import * as services from '@/services'
+import { useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
 import { SnackbarNotificationMount } from '@/components/Notification'
+import { useStore } from './store'
+import { whenever } from '@vueuse/core'
+import { useBetterIdle } from './util'
 
 export default v.defineComponent({
   components: {
     SnackbarNotificationMount,
   },
   setup() {
-    const settingsService = v.inject(services.Settings.token)
-    assert(settingsService)
-    const otpService = v.inject(services.Otp.token)
-    assert(otpService)
-    const securityService = v.inject(services.Security.token)
-    assert(securityService)
-
+    const store = useStore()
     const vTheme = useTheme()
     const router = useRouter()
 
-    Object.values(services).forEach((it) => {
-      const service = v.inject(it.token) as InstanceType<typeof it>
-
-      assert(service)
-      'init' in service && service.init()
-    })
-
     v.watch(
-      () => settingsService.reactive.theme,
-      () => {
-        vTheme.global.name.value = settingsService.reactive.theme
-      }
+      () => store.settings.theme,
+      (arg) => (vTheme.global.name.value = arg)
     )
 
     v.watch(
-      () => securityService.reactive.isContextSetUp,
+      () => store.security.isContextSetUp,
       (arg) => {
-        if (!arg) {
+        if (arg) {
+          store.token.fetch()
+        } else {
           router.push({ name: '' + require.resolve('@/routes/index/pass') })
         }
       },
       { immediate: true }
     )
+
+    const { idle } = useBetterIdle(v.toRef(() => store.settings.passwordKeepAlive))
+    whenever(idle, () => store.security.forgetPassword())
 
     return {}
   },

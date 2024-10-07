@@ -2,22 +2,20 @@
 
 wip
 
-Type checking is done by [vue-tsc](https://github.com/johnsoncodehk/volar/tree/master/packages/vue-tsc)
-
-# Why yet another 2FA app?
+# Faq
+### Why yet another 2FA app?
 Web-2FA works in the browser, so you can use the same app to access your 2FA codes on your phone and PC - without installing anything.
+
+### Is is safe?
+As safe as your browser is. Do not use this project if you use browser extensions you do not trust.
 
 ### Security
 
 Data is encrypted and stored locally. No server is used.
+
 The project uses native [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) to encrypt and decrypt stored information.<br/>
-Security related functionality can be found in `src/services/Security.ts`
 
-### Contributing
-
-Set VSCode to use built-in TypeScript version.
-
-### Similar projects
+# Similar projects
 
 [Authenticator (browser extestion)](https://github.com/Authenticator-Extension/Authenticator)<br/>
 [Aegis Authenticator (mobile app)](https://github.com/beemdevelopment/Aegis)<br/>
@@ -30,7 +28,7 @@ The problem with WebRTC is that it's not possible to do data transfer without in
 WebRTC requires 2 way communication (request & response) to initiate the connection. So scanning QR codes is not convenient to say the least.
 One option (besides implementing Signaling) is to use sound - https://github.com/ggerganov/ggwave.
 
-To aid in device discovery a signaling server is required. If you select any of the options below a request to ... will be made. Signaling server won't handle any data transfer. It is not guranteed to work if your devices are behind heavy NAT or firewall. TURN server will never be used.
+To aid in device discovery a signaling server is required. If you select any of the options below a request to ... will be made. Signaling server won't handle any data transfer. It is not guranteed to work if your device s are behind heavy NAT or firewall. TURN server will never be used.
 
 Create sync code / Enter sync code
 
@@ -39,6 +37,7 @@ fuse.js otpauth vue-qrcode-reader
 should not be part of main bundle (use lazy-loading)
 
 todo:
+inform user about local data storage. make note for user to set up sync with g.cloud.
 test qr code support on mobile
 test app with all permisions off
 
@@ -71,6 +70,7 @@ icons for accounts
 ? Add visual tracking to qr detection
 
 done:
+password created notification
 steam account support
 move otpauth to different lazy chunk
 tokens should use single setInterval/setTimeout for each period (minor performance optimization)
@@ -106,5 +106,44 @@ test()
 ```
 the solution currently implemented to remedy this is terrible
 I guess microsoft prefers when its users have to suffer
+
+
+
+
+https://developers.google.com/drive/api/quickstart/js
+
+https://developers.google.com/identity/gsi/web/guides/overview
+
+https://github.com/i7N3/google-oauth-gsi
+https://github.com/google/google-api-javascript-client
+https://github.com/googleapis/google-api-nodejs-client
+
+https://developers.google.com/identity/oauth2/web/guides/overview
+
+https://developers.google.com/identity/protocols/oauth2
+
+https://console.cloud.google.com/apis/credentials?project=proud-archery-437006-q2
+https://console.cloud.google.com/cloud-resource-manager
+
+https://developers.google.com/drive/api/quickstart/js
+https://cloud.google.com/docs/authentication
+https://developers.google.com/drive/api/guides/about-sdk
+
+https://developers.google.com/workspace/guides/get-started !
+
+
+google.accounts.id.initialize({client_id: '825055757333-eonupdkskpbhvl6d3bnl760lpv9j7et7.apps.googleusercontent.com'})
+
+const client = google.accounts.oauth2.initCodeClient({
+  client_id: '825055757333-eonupdkskpbhvl6d3bnl760lpv9j7et7.apps.googleusercontent.com',
+  scope: 'https://www.googleapis.com/auth/drive.file',
+  ux_mode: 'popup',
+  callback: (response) => {
+    console.log(response)
+  },
+});
+
+client.requestCode()
+
 
 -->

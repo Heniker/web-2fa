@@ -1,7 +1,20 @@
 export * as managedPromise from './managedPromise'
 export * from './persist'
+export * from './trigger'
+export * from './fuseSearch'
 
-import { syncRef, until, whenever } from '@vueuse/core'
+import {
+  extendRef,
+  syncRef,
+  until,
+  whenever,
+  type UseIdleOptions,
+  type UseIdleReturn,
+  reactify,
+  computedAsync,
+} from '@vueuse/core'
+import { useIdle } from '@vueuse/core/index.cjs'
+import type { Tagged } from 'type-fest'
 import * as v from 'vue'
 
 export const isResolved = <T>(promise: PromiseLike<T>) => {
@@ -128,12 +141,6 @@ export const seededRandom = (seed: number) => {
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296
 }
 
-export const trigger = async (arg: v.Ref<boolean>) => {
-  arg.value = true
-  await v.nextTick()
-  arg.value = false
-}
-
 /**
  * Returns ref that turns true whenever argument ref changes
  */
@@ -164,4 +171,51 @@ export const useEmitChange = <T>(prop: v.Ref<T>, emitName: string) => {
       instance.emit(emitName, val)
     },
   })
+}
+
+export const noop = () => {}
+
+export const once = <T extends (...args: unknown[]) => unknown>(fn: T) => {
+  let r = () => {
+    fn()
+    r = noop
+  }
+
+  return () => r()
+}
+
+export const isDefined = <T>(arg: T | Falsy): arg is T => arg !== undefined && arg !== null
+
+export const useBetterIdle = (arg: v.Ref<number>, options?: UseIdleOptions): UseIdleReturn => {
+  const result = v.reactive({} as UseIdleReturn)
+
+  let scope = v.effectScope()
+  whenever(
+    () => arg.value > 0,
+    () => {
+      scope.stop()
+      scope = v.effectScope()
+      arg.value !== Infinity && scope.run(() => Object.assign(result, useIdle(arg.value, options)))
+    },
+    { immediate: true }
+  )
+
+  return {
+    idle: v.toRef(() => result.idle),
+    lastActive: v.toRef(() => result.lastActive),
+    reset: result.reset,
+  } satisfies UseIdleReturn
+}
+
+export const reactifyAsync: typeof reactify = (fn, options?) => {
+  const unrefFn = options?.computedGetter === false ? v.unref : v.toValue
+
+  return function (this: any, ...args: any[]) {
+    return computedAsync(() =>
+      fn.apply(
+        this,
+        args.map((i) => unrefFn(i))
+      )
+    )
+  } as any
 }
