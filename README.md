@@ -23,15 +23,6 @@ The project uses native [Web Crypto API](https://developer.mozilla.org/en-US/doc
 
 <!--
 
-
-The problem with WebRTC is that it's not possible to do data transfer without initial connection via Signaling server. Won't work even on the local network.
-WebRTC requires 2 way communication (request & response) to initiate the connection. So scanning QR codes is not convenient to say the least.
-One option (besides implementing Signaling) is to use sound - https://github.com/ggerganov/ggwave.
-
-To aid in device discovery a signaling server is required. If you select any of the options below a request to ... will be made. Signaling server won't handle any data transfer. It is not guranteed to work if your device s are behind heavy NAT or firewall. TURN server will never be used.
-
-Create sync code / Enter sync code
-
 notes:
 fuse.js otpauth vue-qrcode-reader
 should not be part of main bundle (use lazy-loading)

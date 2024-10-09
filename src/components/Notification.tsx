@@ -1,19 +1,28 @@
-import { refDefault, syncRef, until, whenever } from '@vueuse/core'
+import { ManagedPromise } from '@/util/managedPromise'
 import * as v from 'vue'
-import { VCard, VSnackbar } from 'vuetify/components'
+import { VSnackbar } from 'vuetify/components'
 
 // this module is required because VSnackbar won't be persisted if parent component unmounts
-// also VSnackbar will stack on top of each other why
+// also why VSnackbar will stack on top of each other?
 
 type VSnackbarInstance = InstanceType<typeof VSnackbar>
 type VSnackbarProps = VSnackbarInstance['$props']
+type VSnackbarSlots = VSnackbarInstance['$slots']
 // type VSnackbarEmits = VSnackbarInstance['$emit']
 // type VSnackbarSlots = VSnackbarInstance['$slots']
 
-type ItemInfo = { instance: v.ComponentInternalInstance; effectScope: v.EffectScope }
+// type ItemInfo = { instance: v.ComponentInternalInstance; effectScope: v.EffectScope }
+type ItemInfo = {
+  attrs: Record<string, unknown>
+  props: VSnackbarProps
+  slots: VSnackbarSlots
+  unmounted: Promise<void>
+}
 
 // currently only 1 notification mount per app is allowed
 const appToItem = new WeakMap<v.App, ItemInfo[]>()
+
+const EmptyNode = () => v.createCommentVNode('EmptyNode')
 
 export const SnackbarNotification = v.defineComponent({
   inheritAttrs: false,
@@ -29,13 +38,25 @@ export const SnackbarNotification = v.defineComponent({
     assert(notifications, 'NotificationMount should be initiated first')
     assert(ctx.slots.default, 'Default slot is required')
 
-    const item = { instance, effectScope: v.effectScope() }
-    notifications.push(item)
-    // v.onUnmounted(() => notifications.splice(notifications.indexOf(item), 1))
+    const unmounted = new ManagedPromise()
+    let isUnmounted = false
+    unmounted.then(() => (isUnmounted = true))
+
+    notifications.push({
+      attrs: ctx.attrs,
+      slots: ctx.slots,
+      props,
+      unmounted,
+    })
 
     // Nothing is rendered here. Default slot is 'teleported' to NotificationMount
     // This is just a convenience to keep all ui info in <template>
-    return () => ''
+    // return () => <div></div>
+    return () => (
+      <v.Fragment onVnodeUnmounted={() => unmounted.resolve()}>
+        <EmptyNode></EmptyNode>
+      </v.Fragment>
+    )
   },
 })
 
@@ -44,48 +65,47 @@ export const SnackbarNotificationMount = v.defineComponent({
     const instance = v.getCurrentInstance()
     assert(instance)
 
-    const items = v.reactive([]) as ItemInfo[]
-    appToItem.set(instance.appContext.app, items)
+    const notifications = v.reactive([]) as ItemInfo[]
+    appToItem.set(instance.appContext.app, notifications)
 
-    const components = v.computed(() =>
-      items.map((it, i) => (
-        <VSnackbar
-          {...it.instance.attrs}
-          {...it.instance.props}
-          onVnodeMounted={() => onVnodeMounted(it)}
-          // style={{ visibility: i === 0 ? 'visible' : 'hidden' }}
-          attach={'body'}
-          v-slots={it.instance.slots}
-        ></VSnackbar>
-      ))
-    )
+    const components = v.computed((d) => {
+      return notifications.map((it, i) => {
+        return (
+          <VSnackbar
+            {...it.attrs}
+            {...it.props}
+            attach={'body'}
+            v-slots={it.slots}
+            onVnodeMounted={() => onVnodeMounted(it, i)}
+            // style={{ visibility: i === 0 ? 'visible' : 'hidden' }}
+          ></VSnackbar>
+        )
+      })
+    })
 
     return () => components.value
 
-    function onVnodeMounted(it: ItemInfo) {
-      it.effectScope.run(() => v.onScopeDispose(() => onParentUnmounted(it)))
-    }
+    async function onVnodeMounted(it: ItemInfo, i: number) {
+      await it.unmounted
 
-    async function onParentUnmounted(it: ItemInfo) {
-      // intentional reactivity break
-      const modelValue = v.ref(it.instance.props.modelValue)
-
-      {
-        const prev = it.instance.attrs['onUpdate:modelValue'] as any
-        modelValue.value = prev
-        it.instance.attrs['onUpdate:modelValue'] = (arg: boolean) => {
-          prev?.()
-          modelValue.value = arg
-        }
+      if (it.props.modelValue === false) {
+        notifications.splice(i, 1)
+        return
       }
 
-      await until(modelValue).toBe(false)
+      // hack to make props writable. Only works because of Vue Proxy optimization
+      const props = v.reactive(v.toRaw(it.props))
 
-      // hacky way to let animations finish
-      // because vuetify does not expose `afterLeave` event on VSnackbar
-      setTimeout(() => {
-        items.splice(items.indexOf(it))
-      }, 200)
+      props['onUpdate:modelValue'] = (arg: boolean) => {
+        props.modelValue = arg
+
+        // hack to wait till transition plays out. Vueteify does not expose `afterLeave` cb for this
+        if (arg === false) {
+          setTimeout(() => {
+            notifications.splice(i, 1)
+          }, 250)
+        }
+      }
     }
   },
 })

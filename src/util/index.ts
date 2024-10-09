@@ -1,7 +1,6 @@
 export * as managedPromise from './managedPromise'
 export * from './persist'
 export * from './trigger'
-export * from './fuseSearch'
 
 import {
   extendRef,

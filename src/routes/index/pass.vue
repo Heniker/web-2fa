@@ -76,12 +76,10 @@ export default v.defineComponent({
 
     const onPasswordAccept = async () => {
       const result = await store.security.setupSecureContext(password.value)
-      console.log('result')
-      console.log(result)
       if (result === 'new_iv') {
         isPasswordCreated.value = true
       }
-
+      
       if (result) {
         router.push({ name: '' + require.resolve('@/routes/index.vue') })
         isError.value = false

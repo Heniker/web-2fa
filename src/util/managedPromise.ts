@@ -1,4 +1,4 @@
-export class ManagedPromise<T> extends Promise<T> {
+export class ManagedPromise<T = void> extends Promise<T> {
   static [Symbol.species] = Promise
 
   resolve: (value: T) => void

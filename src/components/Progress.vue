@@ -14,7 +14,7 @@
 import { forceProgressUpdateToken } from '@/constant'
 import { otpService } from '@/services'
 import { useStore } from '@/store'
-import { useDocumentVisibility } from '@vueuse/core'
+import { useDocumentVisibility, whenever } from '@vueuse/core'
 import * as v from 'vue'
 
 export default v.defineComponent({
@@ -32,9 +32,9 @@ export default v.defineComponent({
 
     const update = () => transition.update(props.direction)
 
+    whenever(() => visibility.value === 'visible', update)
     v.onMounted(update)
     v.watch(forceProgressUpdateTrigger, update)
-    // v.watch(() => visibility.value === 'visible', update)
     v.watch(() => props.direction, update)
     v.watch(() => store.state.globalProgressBar, update)
 
